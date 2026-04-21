@@ -1,0 +1,1 @@
+- [x] 2. Edit app/(tabs)/index.tsx: Updated heroImages to 16 JPGs (hero1-4 + download + (1-11).jpg), fixed bundler overload
