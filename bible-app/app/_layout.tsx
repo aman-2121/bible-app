@@ -2,9 +2,11 @@ import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import 'react-native-reanimated';
+import { useEffect } from 'react';
 
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { BibleProvider } from '@/context/BibleContext';
+import { setupBackgroundNotifications } from '@/lib/notifications';
 
 export const unstable_settings = {
   anchor: '(tabs)',
@@ -18,6 +20,10 @@ LogBox.ignoreLogs(['expo-notifications: Android Push notifications']);
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
+
+  useEffect(() => {
+    setupBackgroundNotifications();
+  }, []);
 
   return (
     <BibleProvider>

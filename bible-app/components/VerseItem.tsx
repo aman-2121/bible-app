@@ -16,6 +16,8 @@ interface VerseItemProps {
   fontSize?: number;
   lineSpacing?: number;
   theme?: 'light' | 'sepia' | 'dark';
+  highlightColor?: string;
+  onLongPress?: () => void;
 }
 
 export default function VerseItem({ 
@@ -25,13 +27,13 @@ export default function VerseItem({
   verseRef, 
   fontSize = 21, 
   lineSpacing = 1.8, 
-  theme = 'light' 
+  theme = 'light',
+  highlightColor,
+  onLongPress
 }: VerseItemProps) {
   const { theme: globalTheme, language, toggleBookmark, bookmarks } = useBible();
   const tintColor = useThemeColor({}, 'tint');
   const textColor = useThemeColor({}, 'text');
-  const surfaceColor = useThemeColor({}, 'surface');
-  const borderColor = useThemeColor({}, 'border');
   
   const isBookmarked = bookmarks?.includes(verseRef);
 
@@ -93,7 +95,12 @@ export default function VerseItem({
         <View style={[styles.connector, { backgroundColor: theme === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(128,128,128,0.1)' }]} />
       </View>
       
-      <View style={styles.contentCol}>
+      <TouchableOpacity 
+        style={[styles.contentCol, highlightColor ? { backgroundColor: highlightColor, borderRadius: 8, paddingHorizontal: 8, marginHorizontal: -8 } : null]}
+        activeOpacity={0.8}
+        onLongPress={onLongPress}
+        delayLongPress={300}
+      >
         {language === 'am' && (
           <ThemedText style={[styles.textAm, { color: getTextColor(), fontSize: currentFontSize, lineHeight: dynamicLineHeight }]}>
             {textAm}
@@ -139,7 +146,7 @@ export default function VerseItem({
             </Text>
           </TouchableOpacity>
         </View>
-      </View>
+      </TouchableOpacity>
     </View>
   );
 }

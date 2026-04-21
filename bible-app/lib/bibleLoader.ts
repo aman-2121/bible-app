@@ -1,3 +1,4 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { BIBLE_BOOKS } from '@/constants/bibleBooks';
 import { BIBLE_ASSETS } from './bibleAssets';
 
@@ -35,11 +36,25 @@ export async function getChapter(bookId: string, chapterId: string) {
     if (!ch) return [];
 
     let verses = [...ch.verses];
+    const cacheKey = `en_chapter_${bookId}_${chapterId}`;
+
+    // Check cache first
+    try {
+      const cached = await AsyncStorage.getItem(cacheKey);
+      if (cached) {
+        const enData = JSON.parse(cached);
+        return verses.map(v => {
+          const enVerse = enData.find((ev: any) => ev.verse === v.verse);
+          return { ...v, textEn: enVerse ? enVerse.text : v.textEn };
+        });
+      }
+    } catch (e) {
+      console.log('Error reading cache', e);
+    }
 
     // Attempt to fetch English translation lazily from bible-api.com
     try {
       const enBookName = book.nameEn.replace(/ /g, '+');
-      // Timeout after 3 seconds to not block UI forever
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 3000);
       
@@ -50,12 +65,17 @@ export async function getChapter(bookId: string, chapterId: string) {
 
       if (response.ok) {
         const enData = await response.json();
+        const simplifiedEnData = enData.verses.map((ev: any) => ({ verse: ev.verse, text: ev.text.trim() }));
+        
+        // Save to cache
+        await AsyncStorage.setItem(cacheKey, JSON.stringify(simplifiedEnData));
+
         // Merge english verses into our local verses
         verses = verses.map(v => {
-          const enVerse = enData.verses.find((ev: any) => ev.verse === v.verse);
+          const enVerse = simplifiedEnData.find((ev: any) => ev.verse === v.verse);
           return {
             ...v,
-            textEn: enVerse ? enVerse.text.trim() : v.textEn
+            textEn: enVerse ? enVerse.text : v.textEn
           };
         });
       }

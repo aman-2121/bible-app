@@ -10,8 +10,7 @@ export default function TabLayout() {
   const colorScheme = useColorScheme();
 
   return (
-      <Tabs
-
+    <Tabs
       screenOptions={{
         tabBarActiveTintColor: Colors[colorScheme ?? 'light'].tint,
         headerShown: false,
@@ -24,7 +23,7 @@ export default function TabLayout() {
           tabBarIcon: ({ color }) => <IconSymbol size={28} name="house.fill" color={color} />,
         }}
       />
-<Tabs.Screen
+      <Tabs.Screen
         name="search"
         options={{
           title: 'Search',
@@ -39,13 +38,27 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
+        name="plans"
+        options={{
+          title: 'Plans',
+          tabBarIcon: ({ color }) => <IconSymbol size={28} name="list.bullet" color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="journal"
+        options={{
+          title: 'Journal',
+          tabBarIcon: ({ color }) => <IconSymbol size={28} name="pencil.and.outline" color={color} />,
+        }}
+      />
+      <Tabs.Screen
         name="daily"
         options={{
           title: 'Daily',
           tabBarIcon: ({ color }) => <IconSymbol size={28} name="sun.max.fill" color={color} />,
         }}
       />
-
     </Tabs>
   );
 }
+

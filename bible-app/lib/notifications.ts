@@ -1,5 +1,6 @@
 import * as Notifications from 'expo-notifications';
 import { Platform } from 'react-native';
+import { getRandomVerse } from './bibleLoader';
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
@@ -41,4 +42,40 @@ export async function scheduleDailyVerse(verse = 'በመጀመሪያ መጉሥ�
   }
 }
 
+export async function setupBackgroundNotifications() {
+  if (Platform.OS === 'web') return;
+  
+  const { status } = await Notifications.getPermissionsAsync();
+  if (status !== 'granted') return; // Don't prompt here, just check
 
+  // Check if we already scheduled them
+  const scheduled = await Notifications.getAllScheduledNotificationsAsync();
+  if (scheduled.length > 5) return; // We have plenty scheduled
+
+  // Schedule next 7 days (to not overwhelm the system)
+  for (let i = 1; i <= 7; i++) {
+    const randomVerseData = await getRandomVerse();
+    if (!randomVerseData) continue;
+
+    const date = new Date();
+    date.setDate(date.getDate() + i);
+    date.setHours(8, 0, 0, 0);
+
+    const trigger: any = {
+      type: 'date',
+      date: date.getTime(),
+    };
+
+    try {
+      await Notifications.scheduleNotificationAsync({
+        content: {
+          title: 'Daily Manna',
+          body: randomVerseData.textAm,
+        },
+        trigger,
+      });
+    } catch (e) {
+      console.log('Could not schedule notification', e);
+    }
+  }
+}

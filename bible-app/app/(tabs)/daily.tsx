@@ -8,10 +8,13 @@ import { getRandomVerse } from '@/lib/bibleLoader';
 import GlobalControls from '@/components/GlobalHeader';
 import { ThemedText } from '@/components/themed-text';
 import VerseItem from '@/components/VerseItem';
+import { getStreak, updateStreak, StreakData } from '@/lib/storage';
 
 const { width } = Dimensions.get('window');
 
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useFocusEffect } from 'expo-router';
+import { useCallback } from 'react';
 
 export default function DailyScreen() {
   const insets = useSafeAreaInsets();
@@ -20,9 +23,11 @@ export default function DailyScreen() {
   const surfaceColor = useThemeColor({}, 'surface');
   const tintColor = useThemeColor({}, 'tint');
   const textColor = useThemeColor({}, 'text');
+  
   const [dailyVerse, setDailyVerse] = useState<any>(null);
   const [relatedVerses, setRelatedVerses] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [streak, setStreak] = useState<StreakData>({ count: 0, lastReadDate: null });
 
   const fetchDaily = async () => {
     setLoading(true);
@@ -37,12 +42,18 @@ export default function DailyScreen() {
     setLoading(false);
   };
 
+  useFocusEffect(
+    useCallback(() => {
+      // Update streak every time this screen is focused
+      updateStreak().then(setStreak);
+    }, [])
+  );
+
   useEffect(() => {
     fetchDaily();
   }, []);
 
   const greeting = language === 'am' ? 'የዛሬው መነሳሳት' : "Today's Inspiration";
-
   const title = language === 'am' ? 'ዕለታዊ መና' : 'Daily Manna';
 
   const DailyHero = () => (
@@ -62,9 +73,16 @@ export default function DailyScreen() {
       <View style={styles.headerContainer}>
         <View>
           <Text style={[styles.greeting, { color: textColor + '88' }]}>{greeting}</Text>
-          <ThemedText style={styles.title} type="title">
-            {title}
-          </ThemedText>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+            <ThemedText style={styles.title} type="title">
+              {title}
+            </ThemedText>
+            {streak.count > 0 && (
+              <View style={[styles.streakBadge, { backgroundColor: '#fef08a' }]}>
+                <Text style={styles.streakText}>🔥 {streak.count}</Text>
+              </View>
+            )}
+          </View>
         </View>
         <GlobalControls />
       </View>
@@ -130,6 +148,16 @@ const styles = StyleSheet.create({
     fontSize: 28,
     fontWeight: '800',
     fontFamily: 'NotoSansEthiopic-Regular',
+  },
+  streakBadge: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  streakText: {
+    fontSize: 14,
+    fontWeight: '800',
+    color: '#854d0e',
   },
   headerContent: {
     paddingHorizontal: 20,
