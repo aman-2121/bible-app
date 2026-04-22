@@ -7,6 +7,7 @@ import { useBible } from '@/context/BibleContext';
 import { useThemeColor } from '@/hooks/use-theme-color';
 import { getJournalEntries, JournalEntry } from '@/lib/storage';
 import { LinearGradient } from 'expo-linear-gradient';
+import GlobalControls from '@/components/GlobalHeader';
 
 export default function JournalScreen() {
   const insets = useSafeAreaInsets();
@@ -30,16 +31,21 @@ export default function JournalScreen() {
     setEntries(data.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
   };
 
+  // Helper: show Amharic only, English only, or both stacked
+  const t = (am: string, en: string) =>
+    language === 'am' ? am : language === 'en' ? en : `${am}\n${en}`;
+
   const labels = {
-    title: language === 'am' ? 'የጸሎት ማስታወሻ' : (language === 'both' ? 'የጸሎት ማስታወሻ / Prayer Journal' : 'Prayer Journal'),
-    empty: language === 'am' ? 'ማስታወሻዎ ባዶ ነው። ሀሳቦችዎን እና ጸሎቶችዎን መፃፍ ይጀምሩ!' : (language === 'both' ? 'ማስታወሻዎ ባዶ ነው። ሀሳቦችዎን እና ጸሎቶችዎን መፃፍ ይጀምሩ! / Your journal is empty. Start writing your thoughts and prayers!' : 'Your journal is empty. Start writing your thoughts and prayers!'),
-    untitled: language === 'am' ? 'ርዕስ የሌለው' : 'Untitled Entry'
+    title: t('የጸሎት ማስታወሻ', 'Prayer Journal'),
+    empty: t('ማስታወሻዎ ባዶ ነው። ሀሳቦችዎን እና ጸሎቶችዎን መፃፍ ይጀምሩ!', 'Your journal is empty. Start writing your thoughts and prayers!'),
+    untitled: t('ርዕስ የሌለው', 'Untitled Entry')
   };
 
   const renderItem = ({ item }: { item: JournalEntry }) => {
-    const formattedDate = new Date(item.date).toLocaleDateString(language === 'am' ? 'am-ET' : 'en-US', { 
-      year: 'numeric', month: 'short', day: 'numeric' 
-    });
+    const formattedDate = new Date(item.date).toLocaleDateString(
+      language === 'both' ? undefined : (language === 'am' ? 'am-ET' : 'en-US'),
+      { year: 'numeric', month: 'short', day: 'numeric' }
+    );
 
     return (
       <TouchableOpacity 
@@ -61,13 +67,21 @@ export default function JournalScreen() {
   };
 
   return (
-    <View style={[styles.container, { backgroundColor, paddingTop: insets.top }]}>
-      <View style={styles.header}>
-        <View style={[styles.headerIconBg, { backgroundColor: tintColor + '15' }]}>
-          <Ionicons name="book" size={24} color={tintColor} />
+    <View style={[styles.container, { backgroundColor }]}>
+      <LinearGradient
+        colors={['#1e3a8a', '#3b82f6']}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 0 }}
+        style={[styles.header, { paddingTop: insets.top + 10 }]}
+      >
+        <View style={styles.headerRow}>
+          <View style={styles.headerTitleRow}>
+            <Ionicons name="book" size={22} color="rgba(255,255,255,0.8)" />
+            <Text style={styles.title}>{labels.title}</Text>
+          </View>
+          <GlobalControls />
         </View>
-        <Text style={[styles.title, { color: textColor }]}>{labels.title}</Text>
-      </View>
+      </LinearGradient>
 
       <FlatList
         data={entries}
@@ -107,22 +121,30 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   header: {
+    paddingBottom: 30,
+    paddingHorizontal: 20,
+    borderBottomLeftRadius: 40,
+    borderBottomRightRadius: 40,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.2,
+    shadowRadius: 15,
+    elevation: 10,
+  },
+  headerRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingVertical: 20,
-    gap: 15,
+    justifyContent: 'space-between',
   },
-  headerIconBg: {
-    width: 44,
-    height: 44,
-    borderRadius: 12,
+  headerTitleRow: {
+    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
+    gap: 10,
   },
   title: {
-    fontSize: 24,
+    fontSize: 22,
     fontWeight: '800',
+    color: '#fff',
     fontFamily: 'NotoSansEthiopic-Regular',
   },
   listContent: {

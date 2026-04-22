@@ -5,6 +5,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useBible } from '@/context/BibleContext';
 import { useThemeColor } from '@/hooks/use-theme-color';
 import { LinearGradient } from 'expo-linear-gradient';
+import GlobalControls from '@/components/GlobalHeader';
 
 export default function PlansScreen() {
   const insets = useSafeAreaInsets();
@@ -14,35 +15,39 @@ export default function PlansScreen() {
   const textColor = useThemeColor({}, 'text');
   const tintColor = useThemeColor({}, 'tint');
 
+  // Helper: show Amharic only, English only, or both stacked
+  const t = (am: string, en: string) =>
+    language === 'am' ? am : language === 'en' ? en : `${am}\n${en}`;
+
   const plans = [
     { 
       id: '1', 
-      title: language === 'am' ? '30 ቀናት በመዝሙረ ዳዊት' : '30 Days of Psalms', 
+      title: t('30 ቀናት በመዝሙረ ዳዊት', '30 Days of Psalms'), 
       days: 30, 
       completed: 5, 
-      description: language === 'am' ? 'ሰላምን እና መጽናናትን ለማግኘት በመዝሙረ ዳዊት ውስጥ ዕለታዊ ጉዞ።' : 'A daily journey through the Psalms to bring peace and comfort.' 
+      description: t('ሰላምን እና መጽናናትን ለማግኘት በመዝሙረ ዳዊት ውስጥ ዕለታዊ ጉዞ።', 'A daily journey through the Psalms to bring peace and comfort.')
     },
     { 
       id: '2', 
-      title: language === 'am' ? 'አዲስ ኪዳን በ90 ቀናት' : 'New Testament in 90 Days', 
+      title: t('አዲስ ኪዳን በ90 ቀናት', 'New Testament in 90 Days'), 
       days: 90, 
       completed: 0, 
-      description: language === 'am' ? 'ሙሉውን አዲስ ኪዳን በሶስት ወር ውስጥ ያንብቡ።' : 'Read through the entire New Testament in just three months.' 
+      description: t('ሙሉውን አዲስ ኪዳን በሶስት ወር ውስጥ ያንብቡ።', 'Read through the entire New Testament in just three months.')
     },
     { 
       id: '3', 
-      title: language === 'am' ? 'ምሳሌ ለጥበብ' : 'Proverbs for Wisdom', 
+      title: t('ምሳሌ ለጥበብ', 'Proverbs for Wisdom'), 
       days: 31, 
       completed: 31, 
-      description: language === 'am' ? 'ለአንድ ወር ጥበብ በየቀኑ አንድ ምዕራፍ ምሳሌን ያንብቡ።' : 'One chapter of Proverbs each day for a month of wisdom.' 
+      description: t('ለአንድ ወር ጥበብ በየቀኑ አንድ ምዕራፍ ምሳሌን ያንብቡ።', 'One chapter of Proverbs each day for a month of wisdom.')
     },
   ];
 
   const labels = {
-    title: language === 'am' ? 'የንባብ እቅዶች' : (language === 'both' ? 'የንባብ እቅዶች / Reading Plans' : 'Reading Plans'),
-    subtitle: language === 'am' ? 'ዕለታዊ ልምድዎን ያሳድጉ' : 'Grow your daily habit',
-    daysCount: (completed: number, total: number) => 
-      language === 'am' ? `${total} ቀናት (ያለቀው ${completed})` : `${completed} of ${total} days`,
+    title: t('የንባብ እቅዶች', 'Reading Plans'),
+    subtitle: t('ዕለታዊ ልምድዎን ያሳድጉ', 'Grow your daily habit'),
+    daysCount: (completed: number, total: number) =>
+      t(`${total} ቀናት (ያለቀው ${completed})`, `${completed} of ${total} days`),
   };
 
   const renderPlan = ({ item }: { item: any }) => {
@@ -88,11 +93,21 @@ export default function PlansScreen() {
   };
 
   return (
-    <View style={[styles.container, { backgroundColor, paddingTop: insets.top }]}>
-      <View style={styles.header}>
-        <Text style={[styles.title, { color: textColor }]}>{labels.title}</Text>
-        <Text style={[styles.subtitle, { color: textColor + '88' }]}>{labels.subtitle}</Text>
-      </View>
+    <View style={[styles.container, { backgroundColor }]}>
+      <LinearGradient
+        colors={['#1e3a8a', '#3b82f6']}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 0 }}
+        style={[styles.header, { paddingTop: insets.top + 10 }]}
+      >
+        <View style={styles.headerRow}>
+          <View>
+            <Text style={styles.title}>{labels.title}</Text>
+            <Text style={styles.subtitle}>{labels.subtitle}</Text>
+          </View>
+          <GlobalControls />
+        </View>
+      </LinearGradient>
 
       <FlatList
         data={plans}
@@ -110,19 +125,32 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   header: {
+    paddingBottom: 30,
     paddingHorizontal: 20,
-    paddingVertical: 20,
+    borderBottomLeftRadius: 40,
+    borderBottomRightRadius: 40,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.2,
+    shadowRadius: 15,
+    elevation: 10,
+  },
+  headerRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
   },
   title: {
-    fontSize: 24,
+    fontSize: 22,
     fontWeight: '800',
+    color: '#fff',
     fontFamily: 'NotoSansEthiopic-Regular',
   },
   subtitle: {
-    fontSize: 16,
-    marginTop: 4,
+    fontSize: 13,
+    marginTop: 3,
+    color: 'rgba(255,255,255,0.7)',
     fontFamily: 'NotoSansEthiopic-Regular',
-    opacity: 0.7,
   },
   listContent: {
     paddingHorizontal: 20,
