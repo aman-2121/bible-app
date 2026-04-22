@@ -9,6 +9,7 @@ import GlobalControls from '@/components/GlobalHeader';
 import { ThemedText } from '@/components/themed-text';
 import VerseItem from '@/components/VerseItem';
 import { getStreak, updateStreak, StreakData } from '@/lib/storage';
+import { LinearGradient } from 'expo-linear-gradient';
 
 const { width } = Dimensions.get('window');
 
@@ -53,17 +54,26 @@ export default function DailyScreen() {
     fetchDaily();
   }, []);
 
-  const greeting = language === 'am' ? 'የዛሬው መነሳሳት' : "Today's Inspiration";
-  const title = language === 'am' ? 'ዕለታዊ መና' : 'Daily Manna';
+  // Bilingual Labels
+  const labels = {
+    greeting: language === 'am' ? 'የዛሬው መነሳሳት' : (language === 'both' ? 'የዛሬው መነሳሳት / Today\'s Inspiration' : "Today's Inspiration"),
+    title: language === 'am' ? 'ዕለታዊ መና' : (language === 'both' ? 'ዕለታዊ መና / Daily Manna' : 'Daily Manna'),
+    newVerse: language === 'am' ? 'ሌላ ጥቅስ' : (language === 'both' ? 'ሌላ ጥቅስ / New Verse' : 'New Verse'),
+    notify: language === 'am' ? 'ማሳወቂያ' : (language === 'both' ? 'ማሳወቂያ / Notify' : 'Notify'),
+    streakLabel: language === 'am' ? 'ቀናት' : (language === 'both' ? 'ቀናት / Days' : 'Days'),
+    emptyRelated: language === 'am' ? 'ተዛማጅ ጥቅሶች እዚህ ይገኛሉ' : 'Related verses appear here'
+  };
 
   const DailyHero = () => (
     <View style={[styles.heroCard, { backgroundColor: tintColor + '11' }]}>
       <Ionicons name="sunny-outline" size={48} color={tintColor + '44'} />
       <Text style={[styles.heroVerse, { color: textColor }]}>
         {(language === 'am' || language === 'both') && dailyVerse?.textAm}
+        {language === 'both' && "\n"}
+        {(language === 'en' || language === 'both') && dailyVerse?.textEn}
       </Text>
       <Text style={[styles.heroRef, { color: tintColor }]}>
-        {dailyVerse?.bookName} {dailyVerse?.chapter}:{dailyVerse?.verse}
+        {language === 'am' ? `${dailyVerse?.bookName} ${dailyVerse?.chapter}:${dailyVerse?.verse}` : `${dailyVerse?.bookNameEn || dailyVerse?.bookName} ${dailyVerse?.chapter}:${dailyVerse?.verse}`}
       </Text>
     </View>
   );
@@ -71,16 +81,21 @@ export default function DailyScreen() {
   return (
     <View style={[styles.container, { backgroundColor, paddingTop: insets.top }]}>
       <View style={styles.headerContainer}>
-        <View>
-          <Text style={[styles.greeting, { color: textColor + '88' }]}>{greeting}</Text>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+        <View style={{ flex: 1 }}>
+          <Text style={[styles.greeting, { color: textColor + '88' }]}>{labels.greeting}</Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 10 }}>
             <ThemedText style={styles.title} type="title">
-              {title}
+              {labels.title}
             </ThemedText>
             {streak.count > 0 && (
-              <View style={[styles.streakBadge, { backgroundColor: '#fef08a' }]}>
-                <Text style={styles.streakText}>🔥 {streak.count}</Text>
-              </View>
+              <LinearGradient
+                colors={['#fbbf24', '#f59e0b']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={styles.streakBadge}
+              >
+                <Text style={styles.streakText}>🔥 {streak.count} {labels.streakLabel}</Text>
+              </LinearGradient>
             )}
           </View>
         </View>
@@ -103,14 +118,14 @@ export default function DailyScreen() {
                   onPress={fetchDaily}
                 >
                   <Ionicons name="refresh" size={20} color="#fff" />
-                  <Text style={styles.btnText}>{language === 'am' ? 'ሌላ ጥቅስ' : 'New Verse'}</Text>
+                  <Text style={styles.btnText}>{labels.newVerse}</Text>
                 </TouchableOpacity>
                 <TouchableOpacity 
                   style={[styles.secondaryBtn, { backgroundColor: surfaceColor, borderColor: tintColor + '33' }]} 
                   onPress={() => scheduleDailyVerse(dailyVerse?.textAm)} 
                 >
                   <Ionicons name="notifications-outline" size={20} color={tintColor} />
-                  <Text style={[styles.btnTextSecondary, { color: tintColor }]}>{language === 'am' ? 'ማሳወቂያ' : 'Notify'}</Text>
+                  <Text style={[styles.btnTextSecondary, { color: tintColor }]}>{labels.notify}</Text>
                 </TouchableOpacity>
               </View>
             </View>
@@ -121,7 +136,7 @@ export default function DailyScreen() {
         ListEmptyComponent={
           !loading && (
             <View style={styles.noRelated}>
-              <Text style={{ color: textColor + '66', textAlign: 'center' }}>Related verses appear here</Text>
+              <Text style={{ color: textColor + '66', textAlign: 'center' }}>{labels.emptyRelated}</Text>
             </View>
           )
         }
@@ -143,21 +158,30 @@ const styles = StyleSheet.create({
   greeting: {
     fontSize: 14,
     fontWeight: '500',
+    marginBottom: 4,
   },
   title: {
-    fontSize: 28,
+    fontSize: 24,
     fontWeight: '800',
     fontFamily: 'NotoSansEthiopic-Regular',
   },
   streakBadge: {
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
+    flexDirection: 'row',
+    alignItems: 'center',
+    shadowColor: '#f59e0b',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 5,
   },
   streakText: {
-    fontSize: 14,
-    fontWeight: '800',
-    color: '#854d0e',
+    fontSize: 12,
+    fontWeight: '900',
+    color: '#fff',
+    textTransform: 'uppercase',
   },
   headerContent: {
     paddingHorizontal: 20,
@@ -165,70 +189,76 @@ const styles = StyleSheet.create({
   },
   heroCard: {
     borderRadius: 30,
-    height: 240,
+    minHeight: 240,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 20,
-    padding: 40,
+    marginBottom: 25,
+    padding: 30,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.15,
+    shadowOpacity: 0.1,
     shadowRadius: 20,
-    elevation: 10,
+    elevation: 5,
   },
   heroVerse: {
-    fontSize: 22,
+    fontSize: 20,
     fontWeight: '700',
-    lineHeight: 34,
+    lineHeight: 32,
     textAlign: 'center',
     marginTop: 20,
     fontFamily: 'NotoSansEthiopic-Regular',
   },
   heroRef: {
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: '800',
-    marginTop: 10,
+    marginTop: 15,
     textTransform: 'uppercase',
     letterSpacing: 1,
+    opacity: 0.8,
   },
   center: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    padding: 100,
   },
   actionGroup: {
-    gap: 15,
+    flexDirection: 'row',
+    gap: 12,
     marginBottom: 20,
   },
   primaryBtn: {
+    flex: 1,
     flexDirection: 'row',
     height: 56,
     borderRadius: 18,
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 10,
+    gap: 8,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
+    shadowOpacity: 0.15,
     shadowRadius: 8,
+    elevation: 4,
   },
   btnText: {
     color: '#fff',
     fontWeight: '700',
-    fontSize: 16,
+    fontSize: 14,
   },
   secondaryBtn: {
+    flex: 1,
     flexDirection: 'row',
     height: 56,
     borderRadius: 18,
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 10,
+    gap: 8,
     borderWidth: 2,
   },
   btnTextSecondary: {
-    fontWeight: '600',
-    fontSize: 16,
+    fontWeight: '700',
+    fontSize: 14,
   },
   listContent: {
     paddingBottom: 40,
@@ -238,3 +268,4 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
 });
+

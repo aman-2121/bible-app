@@ -17,7 +17,6 @@ export default function SearchScreen() {
   const { language } = useBible();
   const backgroundColor = useThemeColor({}, 'background');
   const surfaceColor = useThemeColor({}, 'surface');
-  const borderColor = useThemeColor({}, 'border');
   const tintColor = useThemeColor({}, 'tint');
   const textColor = useThemeColor({}, 'text');
 
@@ -34,10 +33,14 @@ export default function SearchScreen() {
     setResults([]);
   };
 
-  const placeholder = language === 'am' ? 'ጥቅሶችን ይፈልጉ...' : (language === 'both' ? 'Search / ፈልግ...' : 'Search verses...');
-  const emptyHint  = language === 'am' ? 'ለመፈለግ መተየብ ይጀምሩ' : (language === 'both' ? 'Start typing to search verses / መተየብ ይጀምሩ' : 'Start typing to search verses');
-  const noResult   = language === 'am' ? 'ምንም ጥቅስ አልተገኘም' : (language === 'both' ? 'No matches found / ምንም አልተገኘም' : 'No verses match your search');
-  const title      = language === 'am' ? 'ፍለጋ' : (language === 'both' ? 'ፍለጋ (Search)' : 'Search Bible');
+  const labels = {
+    title: language === 'am' ? 'ፍለጋ' : (language === 'both' ? 'ፍለጋ / Search' : 'Search Bible'),
+    placeholder: language === 'am' ? 'ጥቅሶችን ይፈልጉ...' : (language === 'both' ? 'ፈልግ / Search...' : 'Search verses...'),
+    emptyHint: language === 'am' ? 'ለመፈለግ መተየብ ይጀምሩ' : (language === 'both' ? 'መተየብ ይጀምሩ / Start typing to search' : 'Start typing to search'),
+    noResult: language === 'am' ? 'ምንም ጥቅስ አልተገኘም' : (language === 'both' ? 'ምንም አልተገኘም / No matches' : 'No verses match your search'),
+    searching: language === 'am' ? 'እየፈለገ ነው...' : 'Searching...',
+    tryDifferent: language === 'am' ? 'ሌሎች ቃላቶችን ይሞክሩ' : 'Try different keywords'
+  };
 
   return (
     <View style={[styles.container, { backgroundColor }]}>
@@ -48,15 +51,15 @@ export default function SearchScreen() {
         style={[styles.header, { paddingTop: insets.top + 10 }]}
       >
         <View style={styles.headerRow}>
-          <Text style={styles.headerTitle}>{title}</Text>
+          <Text style={styles.headerTitle}>{labels.title}</Text>
           <GlobalControls />
         </View>
         <View style={[styles.searchBarContainer, { backgroundColor: surfaceColor }]}>
-          <Ionicons name="search" size={20} color={textColor + '66'} style={styles.searchIcon} />
+          <Ionicons name="search" size={20} color={tintColor} style={styles.searchIcon} />
           <TextInput
             style={[styles.input, { color: textColor }]}
-            placeholder={placeholder}
-            placeholderTextColor={textColor + '66'}
+            placeholder={labels.placeholder}
+            placeholderTextColor={textColor + '44'}
             value={query}
             onChangeText={setQuery}
             onSubmitEditing={executeSearch}
@@ -64,7 +67,7 @@ export default function SearchScreen() {
           />
           {query.length > 0 && (
             <TouchableOpacity onPress={clearSearch}>
-              <Ionicons name="close-circle" size={20} color={textColor + '66'} />
+              <Ionicons name="close-circle" size={20} color={textColor + '44'} />
             </TouchableOpacity>
           )}
         </View>
@@ -74,7 +77,7 @@ export default function SearchScreen() {
         <View style={styles.centerContainer}>
           <ActivityIndicator size="large" color={tintColor} />
           <Text style={[styles.loadingText, { color: textColor }]}>
-            {language === 'am' ? 'እየፈለገ ነው...' : 'Searching...'}
+            {labels.searching}
           </Text>
         </View>
       ) : (
@@ -85,13 +88,15 @@ export default function SearchScreen() {
           keyExtractor={(item, index) => item.verseRef + index.toString()}
           ListEmptyComponent={
             <View style={styles.emptyContainer}>
-              <Ionicons name={query ? 'search-outline' : 'book-outline'} size={64} color="rgba(128,128,128,0.2)" />
+              <View style={[styles.emptyIconBg, { backgroundColor: tintColor + '11' }]}>
+                <Ionicons name={query ? 'search-outline' : 'book-outline'} size={64} color={tintColor + '33'} />
+              </View>
               <Text style={[styles.emptyText, { color: textColor }]}>
-                {query ? noResult : emptyHint}
+                {query ? labels.noResult : labels.emptyHint}
               </Text>
               {query && (
-                <Text style={styles.emptySubText}>
-                  {language === 'am' ? 'ሌሎች ቃላቶችን ይሞክሩ' : 'Try different keywords'}
+                <Text style={[styles.emptySubText, { color: textColor + '66' }]}>
+                  {labels.tryDifferent}
                 </Text>
               )}
             </View>
@@ -106,28 +111,34 @@ export default function SearchScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   header: {
-    paddingBottom: 40,
+    paddingBottom: 35,
     paddingHorizontal: 25,
     borderBottomLeftRadius: 40,
     borderBottomRightRadius: 40,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.2,
+    shadowRadius: 15,
+    elevation: 10,
   },
   headerRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 15,
+    marginBottom: 20,
   },
   headerTitle: {
     fontSize: 24,
     fontWeight: '800',
     color: '#fff',
+    fontFamily: 'NotoSansEthiopic-Regular',
   },
   searchBarContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderRadius: 15,
-    paddingHorizontal: 12,
-    height: 50,
+    borderRadius: 20,
+    paddingHorizontal: 15,
+    height: 56,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.1,
@@ -138,7 +149,8 @@ const styles = StyleSheet.create({
   input: {
     flex: 1,
     fontSize: 16,
-    fontWeight: '500',
+    fontWeight: '600',
+    fontFamily: 'NotoSansEthiopic-Regular',
   },
   centerContainer: {
     flex: 1,
@@ -148,8 +160,9 @@ const styles = StyleSheet.create({
   loadingText: {
     marginTop: 15,
     fontSize: 14,
-    fontWeight: '600',
-    opacity: 0.7,
+    fontWeight: '700',
+    opacity: 0.6,
+    fontFamily: 'NotoSansEthiopic-Regular',
   },
   listContent: {
     paddingTop: 20,
@@ -159,19 +172,29 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: 100,
-  },
-  emptyText: {
-    fontSize: 18,
-    fontWeight: '700',
-    marginTop: 20,
-    textAlign: 'center',
-  },
-  emptySubText: {
-    fontSize: 13,
-    color: '#888',
-    marginTop: 8,
-    textAlign: 'center',
+    marginTop: 80,
     paddingHorizontal: 40,
   },
+  emptyIconBg: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 20,
+  },
+  emptyText: {
+    fontSize: 20,
+    fontWeight: '800',
+    textAlign: 'center',
+    fontFamily: 'NotoSansEthiopic-Regular',
+  },
+  emptySubText: {
+    fontSize: 14,
+    marginTop: 10,
+    textAlign: 'center',
+    lineHeight: 22,
+    fontFamily: 'NotoSansEthiopic-Regular',
+  },
 });
+

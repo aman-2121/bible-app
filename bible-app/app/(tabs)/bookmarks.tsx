@@ -27,9 +27,11 @@ export default function BookmarksScreen() {
     });
   }, [bookmarks]);
 
-  const title = language === 'am' ? 'ተወዳጆች' : (language === 'both' ? 'ተወዳጆች (Bookmarks)' : 'Bookmarks');
-  const emptyTitle = language === 'am' ? 'ምንም ተወዳጆች የሉም' : (language === 'both' ? 'No Bookmarks / ምንም የሉም' : 'No Bookmarks Yet');
-  const emptySub = language === 'am' ? 'የሚያስቀምጡ ጥቅሶች እዚህ ይታያሉ' : (language === 'both' ? 'Saved verses appear here / የሚያስቀምጡ ይታያሉ' : 'Verses you save will appear here');
+  const labels = {
+    title: language === 'am' ? 'ተወዳጆች' : (language === 'both' ? 'ተወዳጆች / Bookmarks' : 'Bookmarks'),
+    emptyTitle: language === 'am' ? 'ምንም ተወዳጆች የሉም' : (language === 'both' ? 'ምንም የሉም / No Bookmarks' : 'No Bookmarks Yet'),
+    emptySub: language === 'am' ? 'የሚያስቀምጡ ጥቅሶች እዚህ ይታያሉ' : (language === 'both' ? 'የሚያስቀምጡ ይታያሉ / Saved verses appear here' : 'Verses you save will appear here')
+  };
 
   return (
     <View style={[styles.container, { backgroundColor }]}>
@@ -40,7 +42,7 @@ export default function BookmarksScreen() {
         style={[styles.header, { paddingTop: insets.top + 10 }]}
       >
         <View style={styles.headerRow}>
-          <Text style={styles.headerTitle}>{title}</Text>
+          <Text style={styles.headerTitle}>{labels.title}</Text>
           <GlobalControls />
         </View>
       </LinearGradient>
@@ -57,9 +59,11 @@ export default function BookmarksScreen() {
           keyExtractor={(item) => item.verseRef}
           ListEmptyComponent={
             <View style={styles.emptyContainer}>
-              <Ionicons name="bookmark-outline" size={80} color="rgba(128,128,128,0.2)" />
-              <Text style={[styles.emptyText, { color: textColor }]}>{emptyTitle}</Text>
-              <Text style={styles.emptySubText}>{emptySub}</Text>
+              <View style={[styles.emptyIconBg, { backgroundColor: tintColor + '11' }]}>
+                <Ionicons name="bookmark-outline" size={64} color={tintColor + '33'} />
+              </View>
+              <Text style={[styles.emptyText, { color: textColor }]}>{labels.emptyTitle}</Text>
+              <Text style={[styles.emptySubText, { color: textColor + '66' }]}>{labels.emptySub}</Text>
             </View>
           }
           showsVerticalScrollIndicator={false}
@@ -72,10 +76,15 @@ export default function BookmarksScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   header: {
-    paddingBottom: 40,
+    paddingBottom: 35,
     paddingHorizontal: 25,
     borderBottomLeftRadius: 40,
     borderBottomRightRadius: 40,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.2,
+    shadowRadius: 15,
+    elevation: 10,
   },
   headerRow: {
     flexDirection: 'row',
@@ -86,6 +95,7 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: '800',
     color: '#fff',
+    fontFamily: 'NotoSansEthiopic-Regular',
   },
   listContent: {
     paddingTop: 20,
@@ -100,17 +110,29 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: 120,
+    marginTop: 80,
+    paddingHorizontal: 40,
+  },
+  emptyIconBg: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 20,
   },
   emptyText: {
     fontSize: 20,
-    fontWeight: '700',
-    marginTop: 20,
+    fontWeight: '800',
+    textAlign: 'center',
+    fontFamily: 'NotoSansEthiopic-Regular',
   },
   emptySubText: {
     fontSize: 14,
-    color: '#888',
-    marginTop: 8,
+    marginTop: 10,
     textAlign: 'center',
+    lineHeight: 22,
+    fontFamily: 'NotoSansEthiopic-Regular',
   },
 });
+

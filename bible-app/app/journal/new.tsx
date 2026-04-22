@@ -3,18 +3,29 @@ import { View, TextInput, StyleSheet, TouchableOpacity, Text, KeyboardAvoidingVi
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { useBible } from '@/context/BibleContext';
 import { useThemeColor } from '@/hooks/use-theme-color';
 import { getJournalEntries, saveJournalEntries } from '@/lib/storage';
 
 export default function NewJournalEntryScreen() {
   const insets = useSafeAreaInsets();
+  const { language } = useBible();
   const { verseRef } = useLocalSearchParams<{ verseRef?: string }>();
   
   const backgroundColor = useThemeColor({}, 'background');
   const textColor = useThemeColor({}, 'text');
   const tintColor = useThemeColor({}, 'tint');
 
-  const [title, setTitle] = useState(verseRef ? `Thoughts on ${verseRef.split(':v')[0]}` : '');
+  const labels = {
+    header: language === 'am' ? 'አዲስ ማስታወሻ' : (language === 'both' ? 'አዲስ ማስታወሻ / New Entry' : 'New Entry'),
+    save: language === 'am' ? 'አስቀምጥ' : (language === 'both' ? 'አስቀምጥ / Save' : 'Save'),
+    placeholderTitle: language === 'am' ? 'ርዕስ (አማራጭ)' : 'Title (Optional)',
+    placeholderText: language === 'am' ? 'ሀሳቦችዎን፣ ጸሎቶችዎን ወይም የጥናት ማስታወሻዎችዎን ይፃፉ...' : 'Write your thoughts, prayers, or study notes...',
+    attached: language === 'am' ? 'የተያያዘ ጥቅስ' : 'Attached Reference',
+    defaultTitlePrefix: language === 'am' ? 'ስለ ' : 'Thoughts on '
+  };
+
+  const [title, setTitle] = useState(verseRef ? `${labels.defaultTitlePrefix}${verseRef.split(':v')[0]}` : '');
   const [text, setText] = useState('');
 
   const handleSave = async () => {
@@ -45,33 +56,35 @@ export default function NewJournalEntryScreen() {
           <Ionicons name="close" size={28} color={textColor} />
         </TouchableOpacity>
         
-        <Text style={[styles.headerTitle, { color: textColor }]}>New Entry</Text>
+        <Text style={[styles.headerTitle, { color: textColor }]}>{labels.header}</Text>
         
         <TouchableOpacity style={styles.saveBtn} onPress={handleSave}>
-          <Text style={[styles.saveBtnText, { color: tintColor }]}>Save</Text>
+          <Text style={[styles.saveBtnText, { color: tintColor }]}>{labels.save}</Text>
         </TouchableOpacity>
       </View>
 
-      <ScrollView contentContainerStyle={styles.content}>
+      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <TextInput
           style={[styles.titleInput, { color: textColor }]}
-          placeholder="Title (Optional)"
-          placeholderTextColor={textColor + '66'}
+          placeholder={labels.placeholderTitle}
+          placeholderTextColor={textColor + '44'}
           value={title}
           onChangeText={setTitle}
         />
         
         {verseRef && (
-          <View style={[styles.verseTag, { backgroundColor: tintColor + '22' }]}>
-            <Ionicons name="bookmark" size={14} color={tintColor} />
-            <Text style={[styles.verseTagText, { color: tintColor }]}>Attached: {verseRef}</Text>
+          <View style={[styles.verseTag, { backgroundColor: tintColor + '15' }]}>
+            <View style={[styles.verseIconBg, { backgroundColor: tintColor }]}>
+              <Ionicons name="bookmark" size={12} color="#fff" />
+            </View>
+            <Text style={[styles.verseTagText, { color: tintColor }]}>{labels.attached}: {verseRef}</Text>
           </View>
         )}
 
         <TextInput
           style={[styles.textInput, { color: textColor }]}
-          placeholder="Write your thoughts, prayers, or study notes..."
-          placeholderTextColor={textColor + '66'}
+          placeholder={labels.placeholderText}
+          placeholderTextColor={textColor + '44'}
           multiline
           autoFocus
           value={text}
@@ -92,53 +105,70 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 20,
-    paddingVertical: 10,
+    paddingVertical: 15,
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(128,128,128,0.1)'
+    borderBottomColor: 'rgba(128,128,128,0.05)'
   },
   iconBtn: {
-    padding: 5,
-    marginLeft: -5,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   headerTitle: {
     fontSize: 18,
-    fontWeight: '700',
+    fontWeight: '800',
+    fontFamily: 'NotoSansEthiopic-Regular',
   },
   saveBtn: {
-    padding: 5,
-    marginRight: -5,
+    paddingHorizontal: 15,
+    paddingVertical: 8,
+    borderRadius: 20,
   },
   saveBtnText: {
     fontSize: 16,
-    fontWeight: '700',
+    fontWeight: '800',
+    fontFamily: 'NotoSansEthiopic-Regular',
   },
   content: {
-    padding: 20,
+    padding: 25,
     flexGrow: 1,
   },
   titleInput: {
     fontSize: 24,
     fontWeight: '800',
-    marginBottom: 15,
+    marginBottom: 20,
+    fontFamily: 'NotoSansEthiopic-Regular',
   },
   verseTag: {
     flexDirection: 'row',
     alignItems: 'center',
     alignSelf: 'flex-start',
     paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 20,
-    marginBottom: 20,
-    gap: 6,
+    paddingVertical: 8,
+    borderRadius: 12,
+    marginBottom: 25,
+    gap: 8,
+  },
+  verseIconBg: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   verseTagText: {
-    fontSize: 12,
+    fontSize: 13,
     fontWeight: '700',
+    fontFamily: 'NotoSansEthiopic-Regular',
   },
   textInput: {
     fontSize: 18,
-    lineHeight: 28,
+    lineHeight: 30,
     flex: 1,
-    minHeight: 300,
+    minHeight: 400,
+    fontFamily: 'NotoSansEthiopic-Regular',
   }
 });
+

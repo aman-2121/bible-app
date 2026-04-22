@@ -2,45 +2,85 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity, ScrollView } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import { useBible } from '@/context/BibleContext';
 import { useThemeColor } from '@/hooks/use-theme-color';
+import { LinearGradient } from 'expo-linear-gradient';
 
 export default function PlansScreen() {
   const insets = useSafeAreaInsets();
+  const { language } = useBible();
   const backgroundColor = useThemeColor({}, 'background');
   const surfaceColor = useThemeColor({}, 'surface');
   const textColor = useThemeColor({}, 'text');
   const tintColor = useThemeColor({}, 'tint');
 
   const plans = [
-    { id: '1', title: '30 Days of Psalms', days: 30, completed: 5, description: 'A daily journey through the Psalms to bring peace and comfort.' },
-    { id: '2', title: 'New Testament in 90 Days', days: 90, completed: 0, description: 'Read through the entire New Testament in just three months.' },
-    { id: '3', title: 'Proverbs for Wisdom', days: 31, completed: 31, description: 'One chapter of Proverbs each day for a month of wisdom.' },
+    { 
+      id: '1', 
+      title: language === 'am' ? '30 ቀናት በመዝሙረ ዳዊት' : '30 Days of Psalms', 
+      days: 30, 
+      completed: 5, 
+      description: language === 'am' ? 'ሰላምን እና መጽናናትን ለማግኘት በመዝሙረ ዳዊት ውስጥ ዕለታዊ ጉዞ።' : 'A daily journey through the Psalms to bring peace and comfort.' 
+    },
+    { 
+      id: '2', 
+      title: language === 'am' ? 'አዲስ ኪዳን በ90 ቀናት' : 'New Testament in 90 Days', 
+      days: 90, 
+      completed: 0, 
+      description: language === 'am' ? 'ሙሉውን አዲስ ኪዳን በሶስት ወር ውስጥ ያንብቡ።' : 'Read through the entire New Testament in just three months.' 
+    },
+    { 
+      id: '3', 
+      title: language === 'am' ? 'ምሳሌ ለጥበብ' : 'Proverbs for Wisdom', 
+      days: 31, 
+      completed: 31, 
+      description: language === 'am' ? 'ለአንድ ወር ጥበብ በየቀኑ አንድ ምዕራፍ ምሳሌን ያንብቡ።' : 'One chapter of Proverbs each day for a month of wisdom.' 
+    },
   ];
+
+  const labels = {
+    title: language === 'am' ? 'የንባብ እቅዶች' : (language === 'both' ? 'የንባብ እቅዶች / Reading Plans' : 'Reading Plans'),
+    subtitle: language === 'am' ? 'ዕለታዊ ልምድዎን ያሳድጉ' : 'Grow your daily habit',
+    daysCount: (completed: number, total: number) => 
+      language === 'am' ? `${total} ቀናት (ያለቀው ${completed})` : `${completed} of ${total} days`,
+  };
 
   const renderPlan = ({ item }: { item: any }) => {
     const progress = item.completed / item.days;
     const isFinished = item.completed === item.days;
 
     return (
-      <TouchableOpacity style={[styles.card, { backgroundColor: surfaceColor }]}>
+      <TouchableOpacity 
+        style={[styles.card, { backgroundColor: surfaceColor, shadowColor: tintColor }]}
+        activeOpacity={0.7}
+      >
         <View style={styles.cardHeader}>
           <Text style={[styles.cardTitle, { color: textColor }]}>{item.title}</Text>
-          {isFinished && <Ionicons name="checkmark-circle" size={24} color="#10b981" />}
+          {isFinished && (
+            <View style={[styles.finishedBadge, { backgroundColor: '#10b98122' }]}>
+              <Ionicons name="checkmark-circle" size={18} color="#10b981" />
+            </View>
+          )}
         </View>
         
-        <Text style={[styles.cardDesc, { color: textColor + '99' }]}>{item.description}</Text>
+        <Text style={[styles.cardDesc, { color: textColor + 'bb' }]}>{item.description}</Text>
 
         <View style={styles.progressSection}>
           <View style={styles.progressInfo}>
-            <Text style={[styles.progressText, { color: textColor }]}>
-              {item.completed} of {item.days} days
+            <Text style={[styles.progressText, { color: textColor + '88' }]}>
+              {labels.daysCount(item.completed, item.days)}
             </Text>
-            <Text style={[styles.progressText, { color: tintColor, fontWeight: '700' }]}>
+            <Text style={[styles.progressPercent, { color: tintColor }]}>
               {Math.round(progress * 100)}%
             </Text>
           </View>
-          <View style={[styles.progressBarBg, { backgroundColor: 'rgba(128,128,128,0.2)' }]}>
-            <View style={[styles.progressBarFill, { width: `${progress * 100}%`, backgroundColor: isFinished ? '#10b981' : tintColor }]} />
+          <View style={[styles.progressBarBg, { backgroundColor: tintColor + '15' }]}>
+            <LinearGradient
+              colors={[tintColor, tintColor + '88']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              style={[styles.progressBarFill, { width: `${progress * 100}%` }]}
+            />
           </View>
         </View>
       </TouchableOpacity>
@@ -50,8 +90,8 @@ export default function PlansScreen() {
   return (
     <View style={[styles.container, { backgroundColor, paddingTop: insets.top }]}>
       <View style={styles.header}>
-        <Text style={[styles.title, { color: textColor }]}>Reading Plans</Text>
-        <Text style={[styles.subtitle, { color: textColor + '88' }]}>Grow your daily habit</Text>
+        <Text style={[styles.title, { color: textColor }]}>{labels.title}</Text>
+        <Text style={[styles.subtitle, { color: textColor + '88' }]}>{labels.subtitle}</Text>
       </View>
 
       <FlatList
@@ -59,6 +99,7 @@ export default function PlansScreen() {
         renderItem={renderPlan}
         keyExtractor={item => item.id}
         contentContainerStyle={styles.listContent}
+        showsVerticalScrollIndicator={false}
       />
     </View>
   );
@@ -70,15 +111,18 @@ const styles = StyleSheet.create({
   },
   header: {
     paddingHorizontal: 20,
-    paddingVertical: 15,
+    paddingVertical: 20,
   },
   title: {
-    fontSize: 28,
+    fontSize: 24,
     fontWeight: '800',
+    fontFamily: 'NotoSansEthiopic-Regular',
   },
   subtitle: {
     fontSize: 16,
     marginTop: 4,
+    fontFamily: 'NotoSansEthiopic-Regular',
+    opacity: 0.7,
   },
   listContent: {
     paddingHorizontal: 20,
@@ -86,30 +130,40 @@ const styles = StyleSheet.create({
     paddingTop: 10,
   },
   card: {
-    padding: 20,
-    borderRadius: 16,
-    marginBottom: 15,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 3,
+    padding: 25,
+    borderRadius: 24,
+    marginBottom: 20,
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.08,
+    shadowRadius: 15,
+    elevation: 5,
   },
   cardHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 8,
+    alignItems: 'flex-start',
+    marginBottom: 12,
   },
   cardTitle: {
     fontSize: 18,
-    fontWeight: '700',
+    fontWeight: '800',
     flex: 1,
+    fontFamily: 'NotoSansEthiopic-Regular',
+    lineHeight: 24,
+  },
+  finishedBadge: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginLeft: 10,
   },
   cardDesc: {
     fontSize: 14,
-    lineHeight: 20,
-    marginBottom: 20,
+    lineHeight: 22,
+    marginBottom: 25,
+    fontFamily: 'NotoSansEthiopic-Regular',
   },
   progressSection: {
     marginTop: 'auto',
@@ -117,19 +171,27 @@ const styles = StyleSheet.create({
   progressInfo: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 8,
+    alignItems: 'flex-end',
+    marginBottom: 10,
   },
   progressText: {
     fontSize: 12,
-    fontWeight: '600',
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  progressPercent: {
+    fontSize: 16,
+    fontWeight: '900',
   },
   progressBarBg: {
-    height: 6,
-    borderRadius: 3,
+    height: 8,
+    borderRadius: 4,
     overflow: 'hidden',
   },
   progressBarFill: {
     height: '100%',
-    borderRadius: 3,
+    borderRadius: 4,
   }
 });
+
