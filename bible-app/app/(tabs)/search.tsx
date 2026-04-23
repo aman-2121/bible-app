@@ -131,7 +131,6 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: '800',
     color: '#fff',
-    fontFamily: 'NotoSansEthiopic-Regular',
   },
   searchBarContainer: {
     flexDirection: 'row',
@@ -150,7 +149,6 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 16,
     fontWeight: '600',
-    fontFamily: 'NotoSansEthiopic-Regular',
   },
   centerContainer: {
     flex: 1,
@@ -162,7 +160,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '700',
     opacity: 0.6,
-    fontFamily: 'NotoSansEthiopic-Regular',
   },
   listContent: {
     paddingTop: 20,
@@ -187,14 +184,12 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: '800',
     textAlign: 'center',
-    fontFamily: 'NotoSansEthiopic-Regular',
   },
   emptySubText: {
     fontSize: 14,
     marginTop: 10,
     textAlign: 'center',
     lineHeight: 22,
-    fontFamily: 'NotoSansEthiopic-Regular',
   },
 });
 

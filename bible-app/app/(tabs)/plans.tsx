@@ -144,13 +144,11 @@ const styles = StyleSheet.create({
     fontSize: 22,
     fontWeight: '800',
     color: '#fff',
-    fontFamily: 'NotoSansEthiopic-Regular',
   },
   subtitle: {
     fontSize: 13,
     marginTop: 3,
     color: 'rgba(255,255,255,0.7)',
-    fontFamily: 'NotoSansEthiopic-Regular',
   },
   listContent: {
     paddingHorizontal: 20,
@@ -176,7 +174,6 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '800',
     flex: 1,
-    fontFamily: 'NotoSansEthiopic-Regular',
     lineHeight: 24,
   },
   finishedBadge: {
@@ -191,7 +188,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     lineHeight: 22,
     marginBottom: 25,
-    fontFamily: 'NotoSansEthiopic-Regular',
   },
   progressSection: {
     marginTop: 'auto',

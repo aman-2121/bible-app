@@ -122,7 +122,6 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: '800',
     color: '#fff',
-    fontFamily: 'NotoSansEthiopic-Regular',
   },
   introBox: {
     padding: 25,
@@ -132,7 +131,6 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '700',
     marginBottom: 4,
-    fontFamily: 'NotoSansEthiopic-Regular',
   },
   listContent: {
     paddingHorizontal: 20,
@@ -164,7 +162,6 @@ const styles = StyleSheet.create({
   fullChapterName: {
     fontSize: 16,
     fontWeight: '700',
-    fontFamily: 'NotoSansEthiopic-Regular',
   },
 });
 

@@ -3,10 +3,14 @@ import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import 'react-native-reanimated';
 import { useEffect } from 'react';
+import * as SplashScreen from 'expo-splash-screen';
 
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { BibleProvider } from '@/context/BibleContext';
 import { setupBackgroundNotifications } from '@/lib/notifications';
+
+// Keep the splash screen visible while we fetch resources
+SplashScreen.preventAutoHideAsync();
 
 export const unstable_settings = {
   anchor: '(tabs)',
@@ -22,7 +26,19 @@ export default function RootLayout() {
   const colorScheme = useColorScheme();
 
   useEffect(() => {
-    setupBackgroundNotifications();
+    // Hide splash screen as soon as the component mounts
+    const init = async () => {
+      try {
+        await setupBackgroundNotifications();
+      } catch (e) {
+        console.error("Setup error:", e);
+      } finally {
+        // Always hide the splash screen even if there's an error
+        await SplashScreen.hideAsync().catch(() => {});
+      }
+    };
+    
+    init();
   }, []);
 
   return (

@@ -119,7 +119,6 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 18,
     fontWeight: '800',
-    fontFamily: 'NotoSansEthiopic-Regular',
   },
   saveBtn: {
     paddingHorizontal: 15,
@@ -129,7 +128,6 @@ const styles = StyleSheet.create({
   saveBtnText: {
     fontSize: 16,
     fontWeight: '800',
-    fontFamily: 'NotoSansEthiopic-Regular',
   },
   content: {
     padding: 25,
@@ -139,7 +137,6 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: '800',
     marginBottom: 20,
-    fontFamily: 'NotoSansEthiopic-Regular',
   },
   verseTag: {
     flexDirection: 'row',
@@ -161,14 +158,12 @@ const styles = StyleSheet.create({
   verseTagText: {
     fontSize: 13,
     fontWeight: '700',
-    fontFamily: 'NotoSansEthiopic-Regular',
   },
   textInput: {
     fontSize: 18,
     lineHeight: 30,
     flex: 1,
     minHeight: 400,
-    fontFamily: 'NotoSansEthiopic-Regular',
   }
 });
 

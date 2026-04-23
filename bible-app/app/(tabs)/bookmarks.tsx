@@ -95,7 +95,6 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: '800',
     color: '#fff',
-    fontFamily: 'NotoSansEthiopic-Regular',
   },
   listContent: {
     paddingTop: 20,
@@ -125,14 +124,12 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: '800',
     textAlign: 'center',
-    fontFamily: 'NotoSansEthiopic-Regular',
   },
   emptySubText: {
     fontSize: 14,
     marginTop: 10,
     textAlign: 'center',
     lineHeight: 22,
-    fontFamily: 'NotoSansEthiopic-Regular',
   },
 });
 

@@ -205,7 +205,6 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 28,
     fontWeight: '800',
-    fontFamily: 'NotoSansEthiopic-Regular',
   },
   actionGroup: {
     flexDirection: 'row',
@@ -260,7 +259,6 @@ const styles = StyleSheet.create({
     fontSize: 22,
     fontWeight: '700',
     lineHeight: 32,
-    fontFamily: 'NotoSansEthiopic-Regular',
     textShadowColor: 'rgba(0, 0, 0, 0.2)',
     textShadowOffset: { width: 0, height: 2 },
     textShadowRadius: 4,

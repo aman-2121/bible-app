@@ -203,7 +203,6 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: '800',
     color: '#fff',
-    fontFamily: 'NotoSansEthiopic-Regular',
   },
   headerSubTitle: {
     fontSize: 12,

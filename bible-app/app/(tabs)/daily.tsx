@@ -163,7 +163,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 24,
     fontWeight: '800',
-    fontFamily: 'NotoSansEthiopic-Regular',
+    fontFamily: undefined,
   },
   streakBadge: {
     paddingHorizontal: 12,
@@ -206,7 +206,7 @@ const styles = StyleSheet.create({
     lineHeight: 32,
     textAlign: 'center',
     marginTop: 20,
-    fontFamily: 'NotoSansEthiopic-Regular',
+    fontFamily: undefined,
   },
   heroRef: {
     fontSize: 14,

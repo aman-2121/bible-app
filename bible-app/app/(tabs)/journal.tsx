@@ -145,7 +145,6 @@ const styles = StyleSheet.create({
     fontSize: 22,
     fontWeight: '800',
     color: '#fff',
-    fontFamily: 'NotoSansEthiopic-Regular',
   },
   listContent: {
     paddingHorizontal: 20,
@@ -170,7 +169,6 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '700',
     flex: 1,
-    fontFamily: 'NotoSansEthiopic-Regular',
   },
   cardDate: {
     fontSize: 12,
