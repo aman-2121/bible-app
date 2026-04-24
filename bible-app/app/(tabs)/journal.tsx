@@ -201,7 +201,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontSize: 16,
     lineHeight: 26,
-    fontFamily: 'NotoSansEthiopic-Regular',
+    // fontFamily: 'NotoSansEthiopic-Regular',
   },
   fab: {
     position: 'absolute',

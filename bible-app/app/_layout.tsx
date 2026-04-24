@@ -8,6 +8,8 @@ import * as SplashScreen from 'expo-splash-screen';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { BibleProvider } from '@/context/BibleContext';
 import { setupBackgroundNotifications } from '@/lib/notifications';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { LogBox } from 'react-native';
 
 // Keep the splash screen visible while we fetch resources
 SplashScreen.preventAutoHideAsync();
@@ -16,8 +18,7 @@ export const unstable_settings = {
   anchor: '(tabs)',
 };
 
-import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { LogBox } from 'react-native';
+
 
 // Ignore SDK 53+ push notification warning for Expo Go
 LogBox.ignoreLogs(['expo-notifications: Android Push notifications']);

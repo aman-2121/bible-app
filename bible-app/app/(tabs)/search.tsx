@@ -23,7 +23,7 @@ export default function SearchScreen() {
   const executeSearch = async () => {
     if (!query) return;
     setLoading(true);
-    const res = await searchBible(query);
+    const res = await searchBible(query, 50, language);
     setResults(res);
     setLoading(false);
   };

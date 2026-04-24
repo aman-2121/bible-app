@@ -187,7 +187,7 @@ const styles = StyleSheet.create({
     paddingBottom: 10,
   },
   textAm: {
-    fontFamily: 'NotoSansEthiopic-Regular',
+    // fontFamily: 'NotoSansEthiopic-Regular',
     fontSize: 21,
     lineHeight: 38,
     fontWeight: '500',

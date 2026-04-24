@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ActivityIndicator, TouchableOpacity, Dimensions, FlatList } from 'react-native';
+import React, { useState, useEffect, useCallback } from 'react';
+import { View, Text, StyleSheet, ActivityIndicator, TouchableOpacity, FlatList } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { scheduleDailyVerse } from '@/lib/notifications';
 import { useThemeColor } from '@/hooks/use-theme-color';
@@ -8,14 +8,14 @@ import { getRandomVerse } from '@/lib/bibleLoader';
 import GlobalControls from '@/components/GlobalHeader';
 import { ThemedText } from '@/components/themed-text';
 import VerseItem from '@/components/VerseItem';
-import { getStreak, updateStreak, StreakData } from '@/lib/storage';
+import { updateStreak, StreakData } from '@/lib/storage';
 import { LinearGradient } from 'expo-linear-gradient';
 
-const { width } = Dimensions.get('window');
+// const { width } = Dimensions.get('window');
 
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFocusEffect } from 'expo-router';
-import { useCallback } from 'react';
+
 
 export default function DailyScreen() {
   const insets = useSafeAreaInsets();

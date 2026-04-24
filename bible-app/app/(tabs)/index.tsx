@@ -1,26 +1,40 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { FlatList, View, StyleSheet, TouchableOpacity, Text, Appearance, ScrollView, Dimensions, ImageBackground, Share } from 'react-native';
+import { FlatList, View, StyleSheet, TouchableOpacity, Text, ImageBackground, Share } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
 import { BIBLE_BOOKS } from '@/constants/bibleBooks';
 import BookCard from '@/components/BookCard';
 import { ThemedText } from '@/components/themed-text';
 import { useThemeColor } from '@/hooks/use-theme-color';
 import { useBible } from '@/context/BibleContext';
 import GlobalControls from '@/components/GlobalHeader';
-
-const { width } = Dimensions.get('window');
-
 import { getRandomVerse } from '@/lib/bibleLoader';
-
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+
+
+// 16 JPG Background Images for Daily Verse Hero (fixed bundler error)
+const heroImages = [
+  require('../../assets/images/hero1.jpg'),
+  require('../../assets/images/hero2.jpg'),
+  require('../../assets/images/hero3.jpg'),
+  require('../../assets/images/hero4.jpg'),
+  require('../../assets/images/download.jpg'),
+  require('../../assets/images/download (1).jpg'),
+  require('../../assets/images/download (2).jpg'),
+  require('../../assets/images/download (3).jpg'),
+  require('../../assets/images/download (4).jpg'),
+  require('../../assets/images/download (5).jpg'),
+  require('../../assets/images/download (6).jpg'),
+  require('../../assets/images/download (7).jpg'),
+  require('../../assets/images/download (8).jpg'),
+  require('../../assets/images/download (9).jpg'),
+  require('../../assets/images/download (10).jpg'),
+  require('../../assets/images/download (11).jpg'),
+];
 
 export default function HomeScreen() {
   const insets = useSafeAreaInsets();
-  const { language, toggleLanguage, theme, toggleTheme } = useBible();
+  const { language } = useBible();
   const backgroundColor = useThemeColor({}, 'background');
-  const surfaceColor = useThemeColor({}, 'surface');
-  const borderColor = useThemeColor({}, 'border');
   const tintColor = useThemeColor({}, 'tint');
   const textColor = useThemeColor({}, 'text');
   const [selectedTestament, setSelectedTestament] = useState('old');
@@ -29,26 +43,6 @@ export default function HomeScreen() {
   useEffect(() => {
     getRandomVerse().then(setDailyVerse);
   }, []);
-
-// 16 JPG Background Images for Daily Verse Hero (fixed bundler error)
-  const heroImages = [
-    require('../../assets/images/hero1.jpg'),
-    require('../../assets/images/hero2.jpg'),
-    require('../../assets/images/hero3.jpg'),
-    require('../../assets/images/hero4.jpg'),
-    require('../../assets/images/download.jpg'),
-    require('../../assets/images/download (1).jpg'),
-    require('../../assets/images/download (2).jpg'),
-    require('../../assets/images/download (3).jpg'),
-    require('../../assets/images/download (4).jpg'),
-    require('../../assets/images/download (5).jpg'),
-    require('../../assets/images/download (6).jpg'),
-    require('../../assets/images/download (7).jpg'),
-    require('../../assets/images/download (8).jpg'),
-    require('../../assets/images/download (9).jpg'),
-    require('../../assets/images/download (10).jpg'),
-    require('../../assets/images/download (11).jpg'),
-  ];
 
   // Randomly pick one image on component mount
   const randomHeroImage = useMemo(() => {
@@ -91,13 +85,13 @@ export default function HomeScreen() {
       <Text numberOfLines={4} style={[styles.verseText, language === 'both' && { fontSize: 16, lineHeight: 22 }]}>
         {dailyVerse ? (
           <>
-            {language === 'am' && `"${dailyVerse.textAm}"`}
-            {language === 'en' && `"${dailyVerse.textEn || 'Loading English...'}"`}
+            {language === 'am' && "“" + dailyVerse.textAm + "”"}
+            {language === 'en' && "“" + (dailyVerse.textEn || 'Loading English...') + "”"}
             {language === 'both' && (
               <>
-                "{dailyVerse.textAm.substring(0, 80)}..."{"\n"}
+                &quot;{dailyVerse.textAm.substring(0, 80)}...&quot;{"\n"}
                 <Text style={{ fontSize: 13, opacity: 0.9, fontStyle: 'italic' }}>
-                  "{dailyVerse.textEn?.substring(0, 80) || 'Loading...'}..."
+                  &quot;{dailyVerse.textEn?.substring(0, 80) || 'Loading...'}...&quot;
                 </Text>
               </>
             )}

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { FlatList, View, StyleSheet, Text, TouchableOpacity, Dimensions } from 'react-native';
+import { FlatList, View, StyleSheet, Text, TouchableOpacity } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useLocalSearchParams, router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -7,10 +7,10 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useBible } from '@/context/BibleContext';
 import GlobalControls from '@/components/GlobalHeader';
 import { BIBLE_BOOKS } from '@/constants/bibleBooks';
-import { loadBook } from '@/lib/bibleLoader';
+
 import { useThemeColor } from '@/hooks/use-theme-color';
 
-const { width } = Dimensions.get('window');
+
 
 export default function BookScreen() {
   const insets = useSafeAreaInsets();

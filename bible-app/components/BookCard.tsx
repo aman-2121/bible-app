@@ -74,7 +74,7 @@ const styles = StyleSheet.create({
   name: {
     fontSize: 18,
     fontWeight: '700',
-    fontFamily: 'NotoSansEthiopic-Regular',
+    // fontFamily: 'NotoSansEthiopic-Regular',
   },
   nameEn: {
     fontSize: 13,

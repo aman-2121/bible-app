@@ -1,85 +1,87 @@
-import { Asset } from 'expo-asset';
+export function loadBibleAsset(bookId: string): any {
+  switch (bookId) {
+    case '1': return require('../assets/amharic/01-genesis.json');
+    case '2': return require('../assets/amharic/02-exodus.json');
+    case '3': return require('../assets/amharic/03-leviticus.json');
+    case '4': return require('../assets/amharic/04-numbers.json');
+    case '5': return require('../assets/amharic/05-deuteronomy.json');
+    case '6': return require('../assets/amharic/06-joshua.json');
+    case '7': return require('../assets/amharic/07-judges.json');
+    case '8': return require('../assets/amharic/08-ruth.json');
+    case '9': return require('../assets/amharic/09-1samuel.json');
+    case '10': return require('../assets/amharic/10-2 samuel.json');
+    case '11': return require('../assets/amharic/11-1 kings.json');
+    case '12': return require('../assets/amharic/12-2 kings.json');
+    case '13': return require('../assets/amharic/13-1 chronicles.json');
+    case '14': return require('../assets/amharic/14-2 chronicles.json');
+    case '15': return require('../assets/amharic/15-kufale.json');
+    case '16': return require('../assets/amharic/16-enoch.json');
+    case '17': return require('../assets/amharic/17-ezra.json');
+    case '18': return require('../assets/amharic/18-nehemiah.json');
+    case '19': return require('../assets/amharic/19-ezrasutuel.json');
+    case '20': return require('../assets/amharic/20-ezrakale.json');
+    case '21': return require('../assets/amharic/21-tobit.json');
+    case '22': return require('../assets/amharic/22-yodit.json');
+    case '23': return require('../assets/amharic/23-esther.json');
+    case '24': return require('../assets/amharic/24-1 maccabees.json');
+    case '25': return require('../assets/amharic/25-2 maccabees.json');
+    case '26': return require('../assets/amharic/26-3 maccabees.json');
+    case '27': return require('../assets/amharic/27-job.json');
+    case '28': return require('../assets/amharic/28-psalms.json');
+    case '29': return require('../assets/amharic/29-proverbs.json');
+    case '30': return require('../assets/amharic/30-admonition.json');
+    case '31': return require('../assets/amharic/31-wisdom of solomon.json');
+    case '32': return require('../assets/amharic/32-ecclesiastes.json');
+    case '33': return require('../assets/amharic/33-song of solomon.json');
+    case '34': return require('../assets/amharic/34-sirach.json');
+    case '35': return require('../assets/amharic/35-isaiah.json');
+    case '36': return require('../assets/amharic/36-jeremiah.json');
+    case '37': return require('../assets/amharic/37-Baruch.json');
+    case '38': return require('../assets/amharic/38-lamentations.json');
+    case '39': return require('../assets/amharic/39-terefermias.json');
+    case '40': return require('../assets/amharic/40-Teref Baruch.json');
+    case '41': return require('../assets/amharic/41-ezekiel.json');
+    case '42': return require('../assets/amharic/42-daniel.json');
+    case '43': return require('../assets/amharic/43-hosea.json');
+    case '44': return require('../assets/amharic/44-amos.json');
+    case '45': return require('../assets/amharic/45-micah.json');
+    case '46': return require('../assets/amharic/46-joel.json');
+    case '47': return require('../assets/amharic/47-obadiah.json');
+    case '48': return require('../assets/amharic/48-jonah.json');
+    case '49': return require('../assets/amharic/49-nahum.json');
+    case '50': return require('../assets/amharic/50-habakkuk.json');
+    case '51': return require('../assets/amharic/51-zephaniah.json');
+    case '52': return require('../assets/amharic/52-haggai.json');
+    case '53': return require('../assets/amharic/53-zechariah.json');
+    case '54': return require('../assets/amharic/54-malachi.json');
+    case '55': return require('../assets/amharic/55-matthew.json');
+    case '56': return require('../assets/amharic/56-mark.json');
+    case '57': return require('../assets/amharic/57-luke.json');
+    case '58': return require('../assets/amharic/58-john.json');
+    case '59': return require('../assets/amharic/59-act.json');
+    case '60': return require('../assets/amharic/60-romans.json');
+    case '61': return require('../assets/amharic/61-1_corinthians.json');
+    case '62': return require('../assets/amharic/62-2_corinthians.json');
+    case '63': return require('../assets/amharic/63-galatians.json');
+    case '64': return require('../assets/amharic/64-ephesians.json');
+    case '65': return require('../assets/amharic/65-philippians.json');
+    case '66': return require('../assets/amharic/66-colossians.json');
+    case '67': return require('../assets/amharic/67-1_thessalonians.json');
+    case '68': return require('../assets/amharic/68-2_thessalonians.json');
+    case '69': return require('../assets/amharic/69-1_timothy.json');
+    case '70': return require('../assets/amharic/70-2_timothy.json');
+    case '71': return require('../assets/amharic/71-titus.json');
+    case '72': return require('../assets/amharic/72-philemon.json');
+    case '73': return require('../assets/amharic/73-hebrews.json');
+    case '74': return require('../assets/amharic/74-1_peter.json');
+    case '75': return require('../assets/amharic/75-2_peter.json');
+    case '76': return require('../assets/amharic/76-1_john.json');
+    case '77': return require('../assets/amharic/77-2_john.json');
+    case '78': return require('../assets/amharic/78-3-john.json');
+    case '79': return require('../assets/amharic/79-james.json');
+    case '80': return require('../assets/amharic/80-jude.json');
+    case '81': return require('../assets/amharic/81-revelation.json');
+    default: return null;
+  }
+}
 
-export const BIBLE_ASSETS: Record<string, any> = {
-  '1': require('../assets/amharic/01-genesis.json'),
-  '2': require('../assets/amharic/02-exodus.json'),
-  '3': require('../assets/amharic/03-leviticus.json'),
-  '4': require('../assets/amharic/04-numbers.json'),
-  '5': require('../assets/amharic/05-deuteronomy.json'),
-  '6': require('../assets/amharic/06-joshua.json'),
-  '7': require('../assets/amharic/07-judges.json'),
-  '8': require('../assets/amharic/08-ruth.json'),
-  '9': require('../assets/amharic/09-1samuel.json'),
-  '10': require('../assets/amharic/10-2 samuel.json'),
-  '11': require('../assets/amharic/11-1 kings.json'),
-  '12': require('../assets/amharic/12-2 kings.json'),
-  '13': require('../assets/amharic/13-1 chronicles.json'),
-  '14': require('../assets/amharic/14-2 chronicles.json'),
-  '15': require('../assets/amharic/15-kufale.json'),
-  '16': require('../assets/amharic/16-enoch.json'),
-  '17': require('../assets/amharic/17-ezra.json'),
-  '18': require('../assets/amharic/18-nehemiah.json'),
-  '19': require('../assets/amharic/19-ezrasutuel.json'),
-  '20': require('../assets/amharic/20-ezrakale.json'),
-  '21': require('../assets/amharic/21-tobit.json'),
-  '22': require('../assets/amharic/22-yodit.json'),
-  '23': require('../assets/amharic/23-esther.json'),
-  '24': require('../assets/amharic/24-1 maccabees.json'),
-  '25': require('../assets/amharic/25-2 maccabees.json'),
-  '26': require('../assets/amharic/26-3 maccabees.json'),
-  '27': require('../assets/amharic/27-job.json'),
-  '28': require('../assets/amharic/28-psalms.json'),
-  '29': require('../assets/amharic/29-proverbs.json'),
-  '30': require('../assets/amharic/30-admonition.json'),
-  '31': require('../assets/amharic/31-wisdom of solomon.json'),
-  '32': require('../assets/amharic/32-ecclesiastes.json'),
-  '33': require('../assets/amharic/33-song of solomon.json'),
-  '34': require('../assets/amharic/34-sirach.json'),
-  '35': require('../assets/amharic/35-isaiah.json'),
-  '36': require('../assets/amharic/36-jeremiah.json'),
-  '37': require('../assets/amharic/37-Baruch.json'),
-  '38': require('../assets/amharic/38-lamentations.json'),
-  '39': require('../assets/amharic/39-terefermias.json'),
-  '40': require('../assets/amharic/40-Teref Baruch.json'),
-  '41': require('../assets/amharic/41-ezekiel.json'),
-  '42': require('../assets/amharic/42-daniel.json'),
-  '43': require('../assets/amharic/43-hosea.json'),
-  '44': require('../assets/amharic/44-amos.json'),
-  '45': require('../assets/amharic/45-micah.json'),
-  '46': require('../assets/amharic/46-joel.json'),
-  '47': require('../assets/amharic/47-obadiah.json'),
-  '48': require('../assets/amharic/48-jonah.json'),
-  '49': require('../assets/amharic/49-nahum.json'),
-  '50': require('../assets/amharic/50-habakkuk.json'),
-  '51': require('../assets/amharic/51-zephaniah.json'),
-  '52': require('../assets/amharic/52-haggai.json'),
-  '53': require('../assets/amharic/53-zechariah.json'),
-  '54': require('../assets/amharic/54-malachi.json'),
-  '55': require('../assets/amharic/55-matthew.json'),
-  '56': require('../assets/amharic/56-mark.json'),
-  '57': require('../assets/amharic/57-luke.json'),
-  '58': require('../assets/amharic/58-john.json'),
-  '59': require('../assets/amharic/59-act.json'),
-  '60': require('../assets/amharic/60-romans.json'),
-  '61': require('../assets/amharic/61-1_corinthians.json'),
-  '62': require('../assets/amharic/62-2_corinthians.json'),
-  '63': require('../assets/amharic/63-galatians.json'),
-  '64': require('../assets/amharic/64-ephesians.json'),
-  '65': require('../assets/amharic/65-philippians.json'),
-  '66': require('../assets/amharic/66-colossians.json'),
-  '67': require('../assets/amharic/67-1_thessalonians.json'),
-  '68': require('../assets/amharic/68-2_thessalonians.json'),
-  '69': require('../assets/amharic/69-1_timothy.json'),
-  '70': require('../assets/amharic/70-2_timothy.json'),
-  '71': require('../assets/amharic/71-titus.json'),
-  '72': require('../assets/amharic/72-philemon.json'),
-  '73': require('../assets/amharic/73-hebrews.json'),
-  '74': require('../assets/amharic/74-1_peter.json'),
-  '75': require('../assets/amharic/75-2_peter.json'),
-  '76': require('../assets/amharic/76-1_john.json'),
-  '77': require('../assets/amharic/77-2_john.json'),
-  '78': require('../assets/amharic/78-3-john.json'),
-  '79': require('../assets/amharic/79-james.json'),
-  '80': require('../assets/amharic/80-jude.json'),
-  '81': require('../assets/amharic/81-revelation.json'),
-};

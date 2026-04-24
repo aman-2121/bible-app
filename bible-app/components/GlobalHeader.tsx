@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Modal, Pressable, Animated, Dimensions } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Modal, Pressable } from 'react-native';
 
-const { width } = Dimensions.get('window');
 import { Ionicons } from '@expo/vector-icons';
 import { useBible } from '@/context/BibleContext';
 import { useThemeColor } from '@/hooks/use-theme-color';

@@ -1,9 +1,9 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { BIBLE_BOOKS } from '@/constants/bibleBooks';
-import { BIBLE_ASSETS } from './bibleAssets';
+import { loadBibleAsset } from './bibleAssets';
 
 export async function loadBook(bookId: string) {
-  const bookData = BIBLE_ASSETS[bookId];
+  const bookData = loadBibleAsset(bookId);
   if (!bookData) {
     console.warn(`Book data not found for ${bookId}`);
     return { book: BIBLE_BOOKS.find(b => b.id === bookId)!, chapters: [] };
@@ -27,6 +27,30 @@ export async function loadBook(bookId: string) {
     };
   });
   return { book: BIBLE_BOOKS.find(b => b.id === bookId)!, chapters };
+}
+
+export async function loadBookWithCachedEnglish(bookId: string) {
+  const { book, chapters } = await loadBook(bookId);
+  const enrichedChapters = await Promise.all(
+    chapters.map(async (ch: any) => {
+      const cacheKey = `en_chapter_${bookId}_${ch.chapter}`;
+      try {
+        const cached = await AsyncStorage.getItem(cacheKey);
+        if (cached) {
+          const enData = JSON.parse(cached);
+          const enrichedVerses = ch.verses.map((v: any) => {
+            const enVerse = enData.find((ev: any) => ev.verse === v.verse);
+            return { ...v, textEn: enVerse ? enVerse.text : v.textEn };
+          });
+          return { ...ch, verses: enrichedVerses };
+        }
+      } catch (e) {
+        // ignore cache errors
+      }
+      return ch;
+    })
+  );
+  return { book, chapters: enrichedChapters };
 }
 
 export async function getChapter(bookId: string, chapterId: string) {
