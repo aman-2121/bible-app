@@ -1,0 +1,16 @@
+{
+  "bookId": "1",
+  "name": "ዘፍጥረት",
+  "chapters": {
+    "1": [
+      {"verse": 1, "textAm": "በመጀመሪያ መግባር በሆነ ጊዜ መጉሥጠር በዓለም ነበረ። አየርም እና ምድር አድርጎ ።", "textEn": "In the beginning God created the heaven and the earth."},
+      {"verse": 2, "textAm": "ዓለምም ባዶ እና ባለፈ ነበረ። ጨለማም በጨለማ ላይ ተደረገ።", "textEn": "And the earth was without form, and void; and darkness was upon the face of the deep."},
+      {"verse": 3, "textAm": "መጉሥጠርም በቃሉ ብርሃን እንደሆነ አለ። ብርሃንም ተፈጠረ።", "textEn": "And God said, Let there be light: and there was light."}
+      // Add more verses for demo
+    ],
+    "2": [
+      {"verse": 1, "textAm": "ዓለምም በሦስተኛው ቀን ተጠናቀቀ።", "textEn": "Thus the heavens and the earth were finished."}
+    ]
+  }
+}
+
