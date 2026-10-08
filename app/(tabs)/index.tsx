@@ -63,11 +63,6 @@ export default function HomeScreen() {
   const [selectedTestament, setSelectedTestament] = useState<'old' | 'new' | 'all'>('old');
   const [dailyVerse, setDailyVerse] = useState<any>(null);
   const [isSpeaking, setIsSpeaking] = useState(false);
-  const [sidebarOpen, setSidebarOpen] = useState(isWidescreen);
-
-  useEffect(() => {
-    setSidebarOpen(isWidescreen);
-  }, [isWidescreen]);
 
   // Quick Access Dynamic Badges
   const [bookmarksCount, setBookmarksCount] = useState(0);

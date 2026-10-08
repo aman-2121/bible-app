@@ -11,19 +11,19 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useLocalSearchParams, router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
 import * as Clipboard from 'expo-clipboard';
 import { useBible } from '@/context/BibleContext';
 import { getChapter } from '@/lib/bibleLoader';
 import { BIBLE_BOOKS } from '@/constants/bibleBooks';
 import VerseItem from '@/components/VerseItem';
 import { useThemeColor } from '@/hooks/use-theme-color';
-import GlobalControls from '@/components/GlobalHeader';
+import { stopSpeech } from '@/lib/tts';
 
-// New Features & Modals
+// Modals & Panels
 import ReadingSettingsModal from '@/components/ReadingSettingsModal';
 import VerseActionSheet from '@/components/VerseActionSheet';
 import AudioPlayerBar from '@/components/AudioPlayerBar';
+import DeveloperProfileModal from '@/components/DeveloperProfileModal';
 import {
   getHighlights,
   saveHighlights,
@@ -42,9 +42,10 @@ export default function ChapterScreen() {
 
   // Settings State
   const [showSettings, setShowSettings] = useState(false);
-  const [fontSize, setFontSize] = useState(21);
-  const [lineSpacing, setLineSpacing] = useState(1.8);
-  const [readingTheme, setReadingTheme] = useState<'light' | 'sepia' | 'dark'>('light');
+  const [showDeveloperProfile, setShowDeveloperProfile] = useState(false);
+  const [fontSize, setFontSize] = useState(20);
+  const [lineSpacing, setLineSpacing] = useState(1.68);
+  const [readingTheme, setReadingTheme] = useState<'light' | 'sepia' | 'dark'>('dark');
   const [autoScrollSpeed, setAutoScrollSpeed] = useState(0);
   const [keepAwake, setKeepAwake] = useState(true);
   const [isFullScreen, setIsFullScreen] = useState(false);
@@ -61,8 +62,8 @@ export default function ChapterScreen() {
   // Highlights State
   const [highlights, setHighlights] = useState<Highlight[]>([]);
 
-  const { language, theme } = useBible();
-  const isDark = theme === 'dark';
+  const { language, toggleLanguage, theme, toggleTheme } = useBible();
+  const isDark = theme === 'dark' || readingTheme === 'dark';
   const backgroundColor = useThemeColor({}, 'background');
   const surfaceColor = useThemeColor({}, 'surface');
   const borderColor = useThemeColor({}, 'border');
@@ -79,6 +80,13 @@ export default function ChapterScreen() {
       addReadingMinutes(1);
     }, 60000);
     return () => clearInterval(timer);
+  }, []);
+
+  // Stop audio on unmount or navigation away
+  useEffect(() => {
+    return () => {
+      stopSpeech();
+    };
   }, []);
 
   // Load verses and register progress
@@ -120,13 +128,17 @@ export default function ChapterScreen() {
 
   const displayChapterLabel =
     language === 'am'
-      ? `ምዕራፍ ${chapterId}`
+      ? `ምዕ. ${chapterId}`
       : language === 'both'
-      ? `ምዕራፍ / Chapter ${chapterId}`
-      : `Chapter ${chapterId}`;
+      ? `ምዕ. / Ch. ${chapterId}`
+      : `Ch. ${chapterId}`;
 
   // Next / Previous Navigation
   const navigateToChapter = (targetChapter: number) => {
+    stopSpeech();
+    setIsAudioActive(false);
+    setActiveSpeakingIdx(null);
+
     if (targetChapter >= 1 && targetChapter <= totalChapters) {
       router.replace(`/read/${bookId}/${targetChapter}`);
     } else if (targetChapter > totalChapters) {
@@ -180,7 +192,7 @@ export default function ChapterScreen() {
   const handleShare = async () => {
     try {
       await Share.share({
-        message: `${selectedVerseText}\n\n- ${currentBook?.name} ${chapterId}:${selectedVerseRef?.split(':v')[1]}\nShared via Mezamurit 81-Book Bible`,
+        message: `${selectedVerseText}\n\n- ${currentBook?.name} ${chapterId}:${selectedVerseRef?.split(':v')[1]}\n81 መጽሐፍ ቅዱስ • Ethiopian Orthodox Bible`,
       });
     } catch (error) {
       console.log('Error sharing', error);
@@ -192,128 +204,236 @@ export default function ChapterScreen() {
   };
 
   const getContainerBg = () => {
-    if (readingTheme === 'dark') return '#040814';
+    if (readingTheme === 'dark') return '#070e1e';
     if (readingTheme === 'sepia') return '#fbf7ee';
     return backgroundColor;
   };
 
   const getHeaderBg = () => {
-    if (readingTheme === 'dark') return '#091124';
+    if (readingTheme === 'dark') return '#0d172e';
     if (readingTheme === 'sepia') return '#f4ecd8';
     return surfaceColor;
   };
 
   const getHeaderTextColor = () => {
-    if (readingTheme === 'dark') return '#ffffff';
+    if (readingTheme === 'dark') return '#f8fafc';
     if (readingTheme === 'sepia') return '#4a3828';
     return textColor;
   };
 
   const getHeaderBorderColor = () => {
-    if (readingTheme === 'dark') return 'rgba(255,255,255,0.08)';
-    if (readingTheme === 'sepia') return 'rgba(90,60,30,0.1)';
+    if (readingTheme === 'dark') return 'rgba(212, 175, 55, 0.2)';
+    if (readingTheme === 'sepia') return 'rgba(90, 60, 30, 0.12)';
     return borderColor;
   };
 
   const getHeaderBtnBg = () => {
-    if (readingTheme === 'dark') return 'rgba(255,255,255,0.08)';
-    if (readingTheme === 'sepia') return 'rgba(90,60,30,0.08)';
-    return isDark ? 'rgba(255,255,255,0.08)' : 'rgba(15,23,42,0.05)';
+    if (readingTheme === 'dark') return 'rgba(255, 255, 255, 0.06)';
+    if (readingTheme === 'sepia') return 'rgba(90, 60, 30, 0.06)';
+    return isDark ? 'rgba(255, 255, 255, 0.06)' : 'rgba(15, 23, 42, 0.04)';
+  };
+
+  const getLangBadgeText = () => {
+    if (language === 'am') return 'አማ';
+    if (language === 'en') return 'EN';
+    return 'ሁሉ';
   };
 
   return (
     <View style={[styles.container, { backgroundColor: getContainerBg() }]}>
-      {/* Top Header */}
+      {/* 1. Compact Top Control Bar (Excessive empty space removed) */}
       {!isFullScreen && (
         <View
           style={[
-            styles.headerBG,
+            styles.headerBar,
             {
               backgroundColor: getHeaderBg(),
               borderBottomColor: getHeaderBorderColor(),
-              paddingTop: insets.top + 8,
+              paddingTop: Math.max(insets.top, 8) + 4,
             },
           ]}
         >
+          {/* Back Button (Standard Android navigation arrow) */}
           <TouchableOpacity
-            style={[styles.backBtn, { backgroundColor: getHeaderBtnBg(), borderColor: getHeaderBorderColor() }]}
+            style={[
+              styles.navBtn,
+              { backgroundColor: getHeaderBtnBg(), borderColor: getHeaderBorderColor() },
+            ]}
             onPress={() => router.back()}
+            activeOpacity={0.7}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            accessibilityLabel="Go back to previous screen"
           >
-            <Ionicons name="arrow-back" size={20} color={getHeaderTextColor()} />
+            <Ionicons name="arrow-back" size={19} color={getHeaderTextColor()} />
           </TouchableOpacity>
 
-          <View style={styles.headerTextContainer}>
-            <Text style={[styles.headerTitle, { color: getHeaderTextColor() }]}>{displayBookName}</Text>
-            <Text style={styles.headerSubTitle}>{displayChapterLabel}</Text>
+          {/* Compact Book & Chapter Title */}
+          <View style={styles.titleContainer}>
+            <Text
+              style={[styles.bookTitleText, { color: getHeaderTextColor() }]}
+              numberOfLines={1}
+            >
+              {displayBookName}
+            </Text>
+            <Text style={styles.chapterSubtitleText}>
+              {displayChapterLabel}
+            </Text>
           </View>
 
-          <View style={styles.headerControls}>
+          {/* Right Action Controls: Uniformly sized (32x32), evenly spaced */}
+          <View style={styles.rightControlsGroup}>
             {/* Audio Toggle */}
             <TouchableOpacity
               style={[
                 styles.iconBtn,
                 { backgroundColor: getHeaderBtnBg(), borderColor: getHeaderBorderColor() },
-                isAudioActive && { backgroundColor: '#e5a93c' },
+                isAudioActive && { backgroundColor: '#e5a93c', borderColor: '#c69214' },
               ]}
               onPress={() => setIsAudioActive(!isAudioActive)}
+              activeOpacity={0.7}
+              hitSlop={{ top: 6, bottom: 6, left: 4, right: 4 }}
+              accessibilityLabel="Audio narration"
             >
               <Ionicons
                 name={isAudioActive ? 'volume-high' : 'volume-medium-outline'}
-                size={20}
+                size={17}
                 color={isAudioActive ? '#091124' : getHeaderTextColor()}
               />
             </TouchableOpacity>
 
-            {/* Reading Settings */}
+            {/* Font Size Button */}
             <TouchableOpacity
-              style={[styles.iconBtn, { backgroundColor: getHeaderBtnBg(), borderColor: getHeaderBorderColor() }]}
+              style={[
+                styles.iconBtn,
+                { backgroundColor: getHeaderBtnBg(), borderColor: getHeaderBorderColor() },
+              ]}
               onPress={() => setShowSettings(true)}
+              activeOpacity={0.7}
+              hitSlop={{ top: 6, bottom: 6, left: 4, right: 4 }}
+              accessibilityLabel="Reading settings"
             >
-              <Ionicons name="text" size={18} color={getHeaderTextColor()} />
+              <Ionicons name="text" size={16} color={getHeaderTextColor()} />
             </TouchableOpacity>
 
-            <GlobalControls />
+            {/* Language Selector Button */}
+            <TouchableOpacity
+              style={[
+                styles.iconBtn,
+                styles.langBtn,
+                { backgroundColor: getHeaderBtnBg(), borderColor: getHeaderBorderColor() },
+              ]}
+              onPress={toggleLanguage}
+              activeOpacity={0.7}
+              hitSlop={{ top: 6, bottom: 6, left: 4, right: 4 }}
+              accessibilityLabel="Switch language"
+            >
+              <Text style={[styles.langBtnText, { color: '#e5a93c' }]}>
+                {getLangBadgeText()}
+              </Text>
+            </TouchableOpacity>
+
+            {/* Dark / Light Mode Toggle */}
+            <TouchableOpacity
+              style={[
+                styles.iconBtn,
+                { backgroundColor: getHeaderBtnBg(), borderColor: getHeaderBorderColor() },
+              ]}
+              onPress={toggleTheme}
+              activeOpacity={0.7}
+              hitSlop={{ top: 6, bottom: 6, left: 4, right: 4 }}
+              accessibilityLabel="Toggle dark/light mode"
+            >
+              <Ionicons
+                name={isDark ? 'sunny' : 'moon'}
+                size={16}
+                color="#e5a93c"
+              />
+            </TouchableOpacity>
+
+            {/* Developer Profile Button */}
+            <TouchableOpacity
+              style={[
+                styles.iconBtn,
+                styles.profileBtn,
+                { backgroundColor: getHeaderBtnBg(), borderColor: getHeaderBorderColor() },
+              ]}
+              onPress={() => setShowDeveloperProfile(true)}
+              activeOpacity={0.7}
+              hitSlop={{ top: 6, bottom: 6, left: 4, right: 4 }}
+              accessibilityLabel="Developer Profile"
+            >
+              <Ionicons name="person" size={15} color="#e5a93c" />
+            </TouchableOpacity>
           </View>
         </View>
       )}
 
-      {/* Chapter Quick Navigation Strip */}
-      <View style={[styles.navStrip, { borderBottomColor: 'rgba(128,128,128,0.1)' }]}>
+      {/* 2. Compact Chapter Navigation Strip */}
+      <View
+        style={[
+          styles.navStrip,
+          {
+            backgroundColor: getHeaderBg(),
+            borderBottomColor: getHeaderBorderColor(),
+          },
+        ]}
+      >
+        {/* Previous Chapter */}
         <TouchableOpacity
-          style={[styles.stripBtn, currentChapterNum <= 1 && { opacity: 0.3 }]}
+          style={[
+            styles.stripBtn,
+            currentChapterNum <= 1 && parseInt(bookId, 10) <= 1 && { opacity: 0.35 },
+          ]}
           onPress={() => navigateToChapter(currentChapterNum - 1)}
           disabled={currentChapterNum <= 1 && parseInt(bookId, 10) <= 1}
+          activeOpacity={0.7}
+          hitSlop={{ top: 6, bottom: 6, left: 8, right: 8 }}
         >
-          <Ionicons name="chevron-back" size={18} color={tintColor} />
+          <Ionicons name="chevron-back" size={16} color={tintColor} />
           <Text style={[styles.stripBtnText, { color: tintColor }]}>
-            {language === 'am' ? 'ቀደምት ምዕራፍ' : 'Prev Chapter'}
+            {language === 'am' ? 'ቀደምት' : 'Prev'}
           </Text>
         </TouchableOpacity>
 
-        <TouchableOpacity onPress={() => setIsFullScreen(!isFullScreen)}>
-          <Ionicons
-            name={isFullScreen ? 'contract-outline' : 'expand-outline'}
-            size={18}
-            color={textColor + '77'}
-          />
-        </TouchableOpacity>
+        {/* Current Book & Chapter Center Indicator */}
+        <View
+          style={[
+            styles.chapterIndicatorPill,
+            {
+              backgroundColor: isDark ? 'rgba(212, 175, 55, 0.12)' : 'rgba(212, 175, 55, 0.1)',
+              borderColor: isDark ? 'rgba(212, 175, 55, 0.3)' : 'rgba(212, 175, 55, 0.25)',
+            },
+          ]}
+        >
+          <Text style={styles.chapterIndicatorText}>
+            {language === 'am'
+              ? `ምዕራፍ ${chapterId} ከ ${totalChapters}`
+              : `Chapter ${chapterId} of ${totalChapters}`}
+          </Text>
+        </View>
 
+        {/* Next Chapter */}
         <TouchableOpacity
           style={styles.stripBtn}
           onPress={() => navigateToChapter(currentChapterNum + 1)}
+          activeOpacity={0.7}
+          hitSlop={{ top: 6, bottom: 6, left: 8, right: 8 }}
         >
           <Text style={[styles.stripBtnText, { color: tintColor }]}>
-            {language === 'am' ? 'ቀጣይ ምዕራፍ' : 'Next Chapter'}
+            {language === 'am' ? 'ቀጣይ' : 'Next'}
           </Text>
-          <Ionicons name="chevron-forward" size={18} color={tintColor} />
+          <Ionicons name="chevron-forward" size={16} color={tintColor} />
         </TouchableOpacity>
       </View>
 
-      {/* Main Verse FlatList */}
+      {/* 3. Main Verse Area — Maximized Screen Real Estate */}
       <FlatList
         ref={flatListRef}
         data={verses}
-        contentContainerStyle={[styles.listContent, isAudioActive && { paddingBottom: 150 }]}
+        contentContainerStyle={[
+          styles.listContent,
+          isAudioActive && { paddingBottom: 160 },
+        ]}
         renderItem={({ item, index }) => {
           const vRef = `${verseRefPrefix}:v${item.verse}`;
           const currentHl = getHighlightColor(vRef);
@@ -338,22 +458,28 @@ export default function ChapterScreen() {
         ListFooterComponent={
           <View style={styles.footerNav}>
             <TouchableOpacity
-              style={[styles.footerNavBtn, { backgroundColor: tintColor + '12' }]}
+              style={[
+                styles.footerNavBtn,
+                { backgroundColor: tintColor + '12', borderColor: tintColor + '33', borderWidth: 1 },
+                currentChapterNum <= 1 && parseInt(bookId, 10) <= 1 && { opacity: 0.4 },
+              ]}
               onPress={() => navigateToChapter(currentChapterNum - 1)}
               disabled={currentChapterNum <= 1 && parseInt(bookId, 10) <= 1}
+              activeOpacity={0.7}
             >
               <Ionicons name="arrow-back" size={16} color={tintColor} />
               <Text style={[styles.footerNavText, { color: tintColor }]}>
-                {language === 'am' ? 'ቀደምት ምዕራፍ' : 'Previous'}
+                {language === 'am' ? 'ቀደምት ምዕራፍ' : 'Previous Chapter'}
               </Text>
             </TouchableOpacity>
 
             <TouchableOpacity
               style={[styles.footerNavBtn, { backgroundColor: '#c69214' }]}
               onPress={() => navigateToChapter(currentChapterNum + 1)}
+              activeOpacity={0.7}
             >
               <Text style={[styles.footerNavText, { color: '#fff' }]}>
-                {language === 'am' ? 'ቀጣይ ምዕራፍ' : 'Next'}
+                {language === 'am' ? 'ቀጣይ ምዕራፍ' : 'Next Chapter'}
               </Text>
               <Ionicons name="arrow-forward" size={16} color="#fff" />
             </TouchableOpacity>
@@ -361,7 +487,7 @@ export default function ChapterScreen() {
         }
       />
 
-      {/* Sticky Audio Player */}
+      {/* 4. Sticky Audio Player Bar */}
       {isAudioActive && (
         <AudioPlayerBar
           verses={verses}
@@ -371,12 +497,11 @@ export default function ChapterScreen() {
           autoPlay={true}
           onActiveVerseChange={idx => {
             setActiveSpeakingIdx(idx);
-            // Smoothly auto-scroll to the spoken verse
             if (flatListRef.current && idx < verses.length) {
               flatListRef.current.scrollToIndex({
                 index: idx,
                 animated: true,
-                viewPosition: 0.3,
+                viewPosition: 0.25,
               });
             }
           }}
@@ -388,7 +513,7 @@ export default function ChapterScreen() {
         />
       )}
 
-      {/* Reading Settings Modal */}
+      {/* 5. Reading Settings Modal */}
       <ReadingSettingsModal
         visible={showSettings}
         onClose={() => setShowSettings(false)}
@@ -404,7 +529,7 @@ export default function ChapterScreen() {
         setKeepAwake={setKeepAwake}
       />
 
-      {/* Verse Action Sheet */}
+      {/* 6. Verse Action Sheet */}
       {selectedVerseRef && (
         <VerseActionSheet
           visible={actionSheetVisible}
@@ -425,97 +550,132 @@ export default function ChapterScreen() {
           }}
         />
       )}
+
+      {/* 7. Developer Profile Modal */}
+      <DeveloperProfileModal
+        visible={showDeveloperProfile}
+        onClose={() => setShowDeveloperProfile(false)}
+      />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1 },
-  headerBG: {
-    paddingBottom: 12,
-    paddingHorizontal: 16,
+  container: {
+    flex: 1,
+  },
+  headerBar: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    paddingHorizontal: 12,
+    paddingBottom: 6,
     borderBottomWidth: 1,
   },
-  backBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: 11,
+  navBtn: {
+    width: 34,
+    height: 34,
+    borderRadius: 10,
     borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  headerTextContainer: {
-    alignItems: 'center',
+  titleContainer: {
     flex: 1,
     paddingHorizontal: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  headerTitle: {
-    fontSize: 17,
+  bookTitleText: {
+    fontSize: 15,
     fontWeight: '800',
+    textAlign: 'center',
   },
-  headerSubTitle: {
-    fontSize: 12,
+  chapterSubtitleText: {
+    fontSize: 11,
     fontWeight: '700',
     color: '#e5a93c',
-    letterSpacing: 0.3,
+    letterSpacing: 0.2,
     marginTop: 1,
   },
-  headerControls: {
+  rightControlsGroup: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: 5,
   },
   iconBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: 11,
+    width: 32,
+    height: 32,
+    borderRadius: 9,
     borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
   },
+  langBtn: {
+    paddingHorizontal: 2,
+  },
+  langBtnText: {
+    fontSize: 11,
+    fontWeight: '800',
+    letterSpacing: 0.2,
+  },
+  profileBtn: {},
   navStrip: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingVertical: 10,
+    paddingHorizontal: 14,
+    paddingVertical: 5,
     borderBottomWidth: 1,
   },
   stripBtn: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
+    gap: 3,
+    paddingVertical: 2,
+    paddingHorizontal: 4,
   },
   stripBtnText: {
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: '700',
   },
+  chapterIndicatorPill: {
+    paddingHorizontal: 10,
+    paddingVertical: 3,
+    borderRadius: 12,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  chapterIndicatorText: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#e5a93c',
+    letterSpacing: 0.2,
+  },
   listContent: {
-    paddingTop: 16,
-    paddingBottom: 80,
+    paddingTop: 8,
+    paddingBottom: 60,
   },
   footerNav: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    paddingHorizontal: 20,
-    marginTop: 20,
+    paddingHorizontal: 16,
+    marginTop: 16,
     marginBottom: 40,
-    gap: 16,
+    gap: 12,
   },
   footerNavBtn: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 8,
-    paddingVertical: 14,
-    borderRadius: 16,
+    gap: 6,
+    paddingVertical: 12,
+    borderRadius: 14,
   },
   footerNavText: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '700',
   },
 });

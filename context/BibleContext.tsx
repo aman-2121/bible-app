@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
+import { Dimensions } from 'react-native';
 import { getBookmarks, toggleBookmark as toggleStorageBookmark, getSettings, saveSettings } from '../lib/storage';
 
 interface BibleContextType {
@@ -7,6 +8,7 @@ interface BibleContextType {
   language: 'am' | 'en' | 'both';
   theme: 'light' | 'dark' | 'system';
   bookmarks: string[];
+  sidebarOpen: boolean;
   setCurrentBook: (id: string) => void;
   setCurrentChapter: (id: string) => void;
   toggleLanguage: () => void;
@@ -14,6 +16,10 @@ interface BibleContextType {
   toggleTheme: () => void;
   setTheme: (theme: 'light' | 'dark' | 'system') => void;
   toggleBookmark: (verseRef: string) => void;
+  setSidebarOpen: (open: boolean | ((prev: boolean) => boolean)) => void;
+  toggleSidebar: () => void;
+  closeSidebar: () => void;
+  openSidebar: () => void;
 }
 
 const BibleContext = createContext<BibleContextType | undefined>(undefined);
@@ -24,6 +30,13 @@ export function BibleProvider({ children }: { children: ReactNode }) {
   const [language, setLanguageState] = useState<'am' | 'en' | 'both'>('am');
   const [theme, setThemeState] = useState<'light' | 'dark' | 'system'>('system');
   const [bookmarks, setBookmarks] = useState<string[]>([]);
+  const [sidebarOpen, setSidebarOpenState] = useState(() => {
+    try {
+      return Dimensions.get('window').width >= 1024;
+    } catch {
+      return false;
+    }
+  });
 
   useEffect(() => {
     getBookmarks().then(setBookmarks);
@@ -67,10 +80,16 @@ export function BibleProvider({ children }: { children: ReactNode }) {
     setBookmarks(newBookmarks);
   };
 
+  const toggleSidebar = () => setSidebarOpenState(prev => !prev);
+  const closeSidebar = () => setSidebarOpenState(false);
+  const openSidebar = () => setSidebarOpenState(true);
+  const setSidebarOpen = (val: boolean | ((prev: boolean) => boolean)) => setSidebarOpenState(val);
+
   return (
     <BibleContext.Provider value={{ 
-      currentBook, currentChapter, language, theme, bookmarks, 
-      setCurrentBook, setCurrentChapter, toggleLanguage, setLanguage, toggleTheme, setTheme, toggleBookmark 
+      currentBook, currentChapter, language, theme, bookmarks, sidebarOpen,
+      setCurrentBook, setCurrentChapter, toggleLanguage, setLanguage, toggleTheme, setTheme, toggleBookmark,
+      setSidebarOpen, toggleSidebar, closeSidebar, openSidebar,
     }}>
       {children}
     </BibleContext.Provider>

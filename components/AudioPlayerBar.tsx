@@ -1,14 +1,16 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import * as Speech from 'expo-speech';
 import { useBible } from '@/context/BibleContext';
 import { useThemeColor } from '@/hooks/use-theme-color';
 import {
   TTS_CONFIG,
   resolveSpeechTarget,
-  isAmharicVoiceAvailable,
-  showAmharicVoiceMissingAlert,
+  speakBibleText,
+  stopSpeech,
+  pauseSpeech,
+  resumeSpeech,
+  AudioPlaybackState,
 } from '@/lib/tts';
 
 export interface AudioVerseItem {
@@ -29,7 +31,7 @@ interface AudioPlayerBarProps {
   onClose: () => void;
 }
 
-const SPEED_OPTIONS = [0.75, 1.0, 1.25, 1.5];
+const SPEED_OPTIONS = [0.85, 1.0, 1.25, 1.5];
 
 export default function AudioPlayerBar({
   verses,
@@ -46,13 +48,14 @@ export default function AudioPlayerBar({
   const textColor = useThemeColor({}, 'text');
   const tintColor = useThemeColor({}, 'tint');
 
-  const [playbackState, setPlaybackState] = useState<'playing' | 'paused' | 'stopped'>('stopped');
+  const [playbackState, setPlaybackState] = useState<AudioPlaybackState>('stopped');
+  const [loadingMessage, setLoadingMessage] = useState<string>('');
   const [currentIdx, setCurrentIdx] = useState(initialVerseIndex);
-  const [speedIndex, setSpeedIndex] = useState(1); // 1.0x by default
+  const [speedIndex, setSpeedIndex] = useState(1); // 1.0x
   const [autoNextChapter, setAutoNextChapter] = useState(true);
 
   const isMountedRef = useRef(true);
-  const playbackStateRef = useRef<'playing' | 'paused' | 'stopped'>('stopped');
+  const playbackStateRef = useRef<AudioPlaybackState>('stopped');
   playbackStateRef.current = playbackState;
 
   const currentSpeed = SPEED_OPTIONS[speedIndex];
@@ -62,7 +65,7 @@ export default function AudioPlayerBar({
     isMountedRef.current = true;
     return () => {
       isMountedRef.current = false;
-      Speech.stop();
+      stopSpeech();
     };
   }, []);
 
@@ -75,10 +78,10 @@ export default function AudioPlayerBar({
     }
   }, [initialVerseIndex]);
 
-  // Automatically change TTS language and voice when the user switches languages
+  // When language switches, smoothly stop and restart with new language & voice
   useEffect(() => {
-    if (playbackStateRef.current === 'playing') {
-      Speech.stop();
+    if (playbackStateRef.current === 'playing' || playbackStateRef.current === 'loading') {
+      stopSpeech();
       speakVerse(currentIdx);
     }
   }, [language]);
@@ -97,74 +100,71 @@ export default function AudioPlayerBar({
     onActiveVerseChange(index);
 
     const verseItem = verses[index];
-    const { text, language: ttsLang, isAmharic } = resolveSpeechTarget(
-      verseItem.textAm,
-      verseItem.textEn,
-      language
-    );
+    setPlaybackState('loading');
+    setLoadingMessage(language === 'en' ? 'Loading audio...' : 'የአማርኛ ንባብ ድምፅ እየተዘጋጀ ነው...');
 
-    // If Amharic TTS is requested, verify availability before attempting playback
-    if (isAmharic) {
-      const isAvail = await isAmharicVoiceAvailable();
-      if (!isAvail) {
-        setPlaybackState('stopped');
-        showAmharicVoiceMissingAlert(language);
-        return;
-      }
-    }
-
-    try {
-      await Speech.stop();
-    } catch {}
-
-    setPlaybackState('playing');
-    let hasStarted = false;
-
-    Speech.speak(text, {
-      language: ttsLang,
+    const success = await speakBibleText({
+      textAm: verseItem.textAm,
+      textEn: verseItem.textEn,
+      appLang: language,
       rate: currentSpeed,
+      bookId: verseItem.verseRef?.split(':')[0],
+      chapterId,
+      verse: verseItem.verse,
+      onLoading: (msg) => {
+        if (isMountedRef.current) {
+          setPlaybackState('loading');
+          setLoadingMessage(msg);
+        }
+      },
       onStart: () => {
-        hasStarted = true;
+        if (isMountedRef.current) {
+          setPlaybackState('playing');
+        }
       },
       onDone: () => {
         if (isMountedRef.current && playbackStateRef.current === 'playing') {
+          // Play next verse automatically
           speakVerse(index + 1);
         }
       },
       onStopped: () => {
-        // Speech stopped or paused
-      },
-      onError: (err) => {
-        console.warn('Speech error on verse:', index, err, 'Lang:', ttsLang);
-        if (isAmharic && !hasStarted) {
-          showAmharicVoiceMissingAlert(language);
+        if (isMountedRef.current) {
           setPlaybackState('stopped');
-        } else if (isMountedRef.current && playbackStateRef.current === 'playing' && index + 1 < verses.length) {
-          speakVerse(index + 1);
+        }
+      },
+      onError: () => {
+        if (isMountedRef.current) {
+          setPlaybackState('error');
         }
       },
     });
+
+    if (!success && isMountedRef.current) {
+      setPlaybackState('stopped');
+    }
   };
 
-  // Play: Start playback from current index
+  // Play: Start narration
   const handlePlay = () => {
     speakVerse(currentIdx);
   };
 
-  // Pause: Pause playback, preserve index
+  // Pause: Pause narration
   const handlePause = () => {
-    Speech.stop();
+    pauseSpeech();
     setPlaybackState('paused');
   };
 
-  // Resume: Resume playback from current index
+  // Resume: Resume from current point
   const handleResume = () => {
-    speakVerse(currentIdx);
+    resumeSpeech();
+    setPlaybackState('playing');
   };
 
-  // Stop: Stop playback and reset to stopped
-  const handleStop = () => {
-    Speech.stop();
+  // Stop: Reset audio
+  const handleStop = async () => {
+    await stopSpeech();
     setPlaybackState('stopped');
   };
 
@@ -198,20 +198,37 @@ export default function AudioPlayerBar({
     const nextSpeedIdx = (speedIndex + 1) % SPEED_OPTIONS.length;
     setSpeedIndex(nextSpeedIdx);
     if (playbackState === 'playing') {
-      Speech.stop();
+      stopSpeech();
       setTimeout(() => speakVerse(currentIdx), 150);
     }
   };
 
-  const handleClose = () => {
-    Speech.stop();
+  const handleClose = async () => {
+    await stopSpeech();
     setPlaybackState('stopped');
     onClose();
   };
 
   const currentVerseNum = verses[currentIdx]?.verse || 1;
   const totalVerses = verses.length;
-  const activeTtsLocale = language === 'en' ? TTS_CONFIG.englishLocale : TTS_CONFIG.amharicLocale;
+  const activeVoiceLabel = language === 'en' ? 'en-US' : 'am-hamen • Addis AI';
+
+  const getStateLabel = () => {
+    switch (playbackState) {
+      case 'loading':
+        return language === 'en' ? 'Preparing audio...' : 'ድምፅ እየተዘጋጀ ነው...';
+      case 'playing':
+        return language === 'en' ? 'Playing' : 'እየተነበበ ነው';
+      case 'paused':
+        return language === 'en' ? 'Paused' : 'ለጊዜው ቆሟል';
+      case 'stopped':
+        return language === 'en' ? 'Stopped' : 'ተቋርጧል';
+      case 'error':
+        return language === 'en' ? 'Unavailable' : 'አልተገኘም';
+      default:
+        return '';
+    }
+  };
 
   return (
     <View style={[styles.container, { backgroundColor: surfaceColor, shadowColor: tintColor }]}>
@@ -219,24 +236,31 @@ export default function AudioPlayerBar({
       <View style={styles.infoRow}>
         <View style={styles.titleGroup}>
           <View style={[styles.audioPulse, playbackState === 'playing' && styles.activePulse]}>
-            <Ionicons
-              name={playbackState === 'playing' ? 'volume-high' : 'volume-medium-outline'}
-              size={18}
-              color="#e5a93c"
-            />
+            {playbackState === 'loading' ? (
+              <ActivityIndicator size="small" color="#e5a93c" />
+            ) : (
+              <Ionicons
+                name={playbackState === 'playing' ? 'volume-high' : 'volume-medium-outline'}
+                size={18}
+                color="#e5a93c"
+              />
+            )}
           </View>
-          <View>
+          <View style={{ flex: 1 }}>
             <View style={styles.titleBadgeRow}>
-              <Text style={[styles.bookTitle, { color: textColor }]}>
+              <Text style={[styles.bookTitle, { color: textColor }]} numberOfLines={1}>
                 {currentBookName} ምዕራፍ {chapterId}
               </Text>
-              {/* Language Engine Indicator Badge */}
               <View style={styles.ttsLangBadge}>
-                <Text style={styles.ttsLangBadgeText}>{activeTtsLocale}</Text>
+                <Text style={styles.ttsLangBadgeText}>{activeVoiceLabel}</Text>
               </View>
             </View>
             <Text style={[styles.verseCounter, { color: textColor + '88' }]}>
-              ጥቅስ / Verse {currentVerseNum} of {totalVerses} • {playbackState.toUpperCase()}
+              {language === 'am' ? `ጥቅስ ${currentVerseNum} ከ ${totalVerses}` : `Verse ${currentVerseNum} of ${totalVerses}`}
+              {' • '}
+              <Text style={{ color: playbackState === 'playing' ? '#e5a93c' : textColor + 'aa', fontWeight: '700' }}>
+                {getStateLabel()}
+              </Text>
             </Text>
           </View>
         </View>
@@ -250,7 +274,7 @@ export default function AudioPlayerBar({
           >
             <Ionicons
               name={autoNextChapter ? 'repeat' : 'repeat-outline'}
-              size={16}
+              size={15}
               color={autoNextChapter ? '#e5a93c' : textColor + '66'}
             />
           </TouchableOpacity>
@@ -262,7 +286,7 @@ export default function AudioPlayerBar({
 
           {/* Close Player */}
           <TouchableOpacity style={styles.closeBtn} onPress={handleClose} accessibilityLabel="Close audio player">
-            <Ionicons name="close" size={20} color={textColor} />
+            <Ionicons name="close" size={18} color={textColor} />
           </TouchableOpacity>
         </View>
       </View>
@@ -276,7 +300,7 @@ export default function AudioPlayerBar({
           disabled={currentIdx === 0}
           accessibilityLabel="Previous verse"
         >
-          <Ionicons name="play-skip-back" size={22} color={textColor} />
+          <Ionicons name="play-skip-back" size={20} color={textColor} />
         </TouchableOpacity>
 
         {/* Play / Pause / Resume Button */}
@@ -292,11 +316,15 @@ export default function AudioPlayerBar({
           activeOpacity={0.8}
           accessibilityLabel={playbackState === 'playing' ? 'Pause' : playbackState === 'paused' ? 'Resume' : 'Play'}
         >
-          <Ionicons
-            name={playbackState === 'playing' ? 'pause' : 'play'}
-            size={26}
-            color="#091124"
-          />
+          {playbackState === 'loading' ? (
+            <ActivityIndicator size="small" color="#091124" />
+          ) : (
+            <Ionicons
+              name={playbackState === 'playing' ? 'pause' : 'play'}
+              size={24}
+              color="#091124"
+            />
+          )}
         </TouchableOpacity>
 
         {/* Dedicated Stop Button */}
@@ -306,7 +334,7 @@ export default function AudioPlayerBar({
           disabled={playbackState === 'stopped'}
           accessibilityLabel="Stop audio"
         >
-          <Ionicons name="stop" size={18} color={textColor} />
+          <Ionicons name="stop" size={17} color={textColor} />
         </TouchableOpacity>
 
         {/* Next Verse */}
@@ -316,7 +344,7 @@ export default function AudioPlayerBar({
           disabled={currentIdx + 1 >= verses.length && !onNextChapter}
           accessibilityLabel="Next verse"
         >
-          <Ionicons name="play-skip-forward" size={22} color={textColor} />
+          <Ionicons name="play-skip-forward" size={20} color={textColor} />
         </TouchableOpacity>
       </View>
     </View>
@@ -326,39 +354,41 @@ export default function AudioPlayerBar({
 const styles = StyleSheet.create({
   container: {
     position: 'absolute',
-    bottom: 20,
-    left: 16,
-    right: 16,
-    borderRadius: 24,
-    padding: 16,
+    bottom: 16,
+    left: 12,
+    right: 12,
+    borderRadius: 20,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
     elevation: 8,
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 12,
+    shadowOpacity: 0.25,
+    shadowRadius: 10,
     borderWidth: 1,
-    borderColor: 'rgba(212, 175, 55, 0.3)',
+    borderColor: 'rgba(212, 175, 55, 0.35)',
   },
   infoRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 12,
+    marginBottom: 8,
   },
   titleGroup: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
+    gap: 8,
     flex: 1,
   },
   titleBadgeRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: 6,
+    flexWrap: 'nowrap',
   },
   ttsLangBadge: {
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 6,
+    paddingHorizontal: 5,
+    paddingVertical: 1.5,
+    borderRadius: 5,
     backgroundColor: 'rgba(229, 169, 60, 0.15)',
     borderWidth: 1,
     borderColor: 'rgba(229, 169, 60, 0.3)',
@@ -367,12 +397,12 @@ const styles = StyleSheet.create({
     fontSize: 9,
     fontWeight: '800',
     color: '#e5a93c',
-    letterSpacing: 0.5,
+    letterSpacing: 0.3,
   },
   audioPulse: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
     backgroundColor: 'rgba(212, 175, 55, 0.15)',
     alignItems: 'center',
     justifyContent: 'center',
@@ -381,35 +411,36 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(229, 169, 60, 0.25)',
   },
   bookTitle: {
-    fontSize: 15,
+    fontSize: 14,
     fontWeight: '800',
+    flexShrink: 1,
   },
   verseCounter: {
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: '500',
-    marginTop: 2,
+    marginTop: 1,
   },
   rightActions: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: 6,
   },
   chipBtn: {
-    paddingHorizontal: 8,
-    paddingVertical: 5,
-    borderRadius: 12,
+    paddingHorizontal: 7,
+    paddingVertical: 4,
+    borderRadius: 10,
     backgroundColor: 'rgba(128,128,128,0.1)',
     alignItems: 'center',
     justifyContent: 'center',
   },
   speedText: {
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: '700',
   },
   closeBtn: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: 'rgba(128,128,128,0.1)',
@@ -418,28 +449,29 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 24,
+    gap: 20,
+    paddingTop: 2,
   },
   controlBtn: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+    width: 38,
+    height: 38,
+    borderRadius: 19,
     alignItems: 'center',
     justifyContent: 'center',
   },
   stopBtn: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     borderWidth: 1,
     borderColor: 'rgba(128,128,128,0.2)',
     alignItems: 'center',
     justifyContent: 'center',
   },
   playPauseBtn: {
-    width: 54,
-    height: 54,
-    borderRadius: 27,
+    width: 48,
+    height: 48,
+    borderRadius: 24,
     alignItems: 'center',
     justifyContent: 'center',
     elevation: 3,

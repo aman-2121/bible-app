@@ -13,10 +13,16 @@
     },
     "android": {
       "package": "com.aman.bibleapp",
+      "versionCode": 1,
       "adaptiveIcon": {
         "backgroundColor": "#1a2a5e",
         "foregroundImage": "./assets/images/icon.png"
       },
+      "permissions": [
+        "RECEIVE_BOOT_COMPLETED",
+        "SCHEDULE_EXACT_ALARM",
+        "POST_NOTIFICATIONS"
+      ],
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false
     },
@@ -36,6 +42,13 @@
           "dark": {
             "backgroundColor": "#1a2a5e"
           }
+        }
+      ],
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/images/icon.png",
+          "color": "#e5a93c"
         }
       ]
     ],

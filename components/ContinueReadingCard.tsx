@@ -7,6 +7,7 @@ import { getContinueReading, ContinueReadingData } from '@/lib/storage';
 import { useBible } from '@/context/BibleContext';
 import { useThemeColor } from '@/hooks/use-theme-color';
 import { getBookThumbnail } from '@/constants/bookImages';
+import OrthodoxCross from '@/components/OrthodoxCross';
 
 export default function ContinueReadingCard() {
   const [data, setData] = useState<ContinueReadingData | null>(null);
@@ -78,7 +79,7 @@ export default function ContinueReadingCard() {
           <View style={styles.thumbWrapper}>
             <Image source={bookThumb} style={styles.bookThumb} resizeMode="cover" />
             <View style={styles.crossOverlay}>
-              <Text style={styles.crossIcon}>✝️</Text>
+              <OrthodoxCross size={16} variant="axum" glow={true} />
             </View>
           </View>
 

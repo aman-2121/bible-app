@@ -9,7 +9,7 @@ import { useColorScheme } from '@/hooks/use-color-scheme';
 import { BibleProvider } from '@/context/BibleContext';
 import { setupBackgroundNotifications } from '@/lib/notifications';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { LogBox } from 'react-native';
+import { LogBox, Platform } from 'react-native';
 
 // Keep the splash screen visible while we fetch resources
 SplashScreen.preventAutoHideAsync();
@@ -40,6 +40,20 @@ export default function RootLayout() {
     };
     
     init();
+
+    // Set custom Ethiopian Orthodox cross as browser tab icon (favicon) on web
+    if (Platform.OS === 'web' && typeof document !== 'undefined') {
+      try {
+        let link: HTMLLinkElement | null = document.querySelector("link[rel*='icon']");
+        if (!link) {
+          link = document.createElement('link');
+          link.rel = 'icon';
+          document.head.appendChild(link);
+        }
+        link.type = 'image/svg+xml';
+        link.href = '/assets/images/orthodox_cross.svg';
+      } catch {}
+    }
   }, []);
 
   return (
@@ -49,6 +63,7 @@ export default function RootLayout() {
           <Stack screenOptions={{ headerShown: false }}>
             <Stack.Screen name="(tabs)" />
             <Stack.Screen name="stats" options={{ presentation: 'card' }} />
+            <Stack.Screen name="profile" options={{ presentation: 'card' }} />
             <Stack.Screen name="book/[bookId]/index" options={{ presentation: 'card' }} />
             <Stack.Screen name="read/[bookId]/[chapterId]/index" options={{ presentation: 'card' }} />
             <Stack.Screen name="journal/new" options={{ presentation: 'modal' }} />

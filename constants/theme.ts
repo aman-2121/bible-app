@@ -78,7 +78,7 @@ export const OrthodoxTheme = {
   parchment: '#fdf6e3',
   softGoldGradient: ['#c69214', '#eab308'],
   royalNavyGradient: ['#0f172a', '#1e3a8a'],
-  orthodoxCross: '✝️',
+  orthodoxCross: '☦',
 };
 
 export const Fonts = Platform.select({

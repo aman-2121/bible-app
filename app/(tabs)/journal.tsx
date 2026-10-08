@@ -16,6 +16,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useBible } from '@/context/BibleContext';
 import { useThemeColor } from '@/hooks/use-theme-color';
 import AppScreenLayout from '@/components/AppScreenLayout';
+import OrthodoxCross from '@/components/OrthodoxCross';
 import {
   getJournalEntries,
   deleteJournalEntry,
@@ -340,7 +341,7 @@ export default function JournalScreen() {
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
             <View style={styles.emptyIconBg}>
-              <Ionicons name="journal-outline" size={36} color="#e5a93c" />
+              <OrthodoxCross size={40} variant="meskel" glow={true} />
             </View>
             <Text style={[styles.emptyText, { color: textColor }]}>
               {labels.empty}

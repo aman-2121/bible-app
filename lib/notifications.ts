@@ -7,10 +7,21 @@ Notifications.setNotificationHandler({
     shouldShowAlert: true,
     shouldShowBanner: true,
     shouldShowList: true,
-    shouldPlaySound: false,
+    shouldPlaySound: true,
     shouldSetBadge: false,
   }),
 });
+
+// Configure Android Notification Channel (Required for Android 8+)
+if (Platform.OS === 'android') {
+  Notifications.setNotificationChannelAsync('daily-verses', {
+    name: 'Daily Bible Verses',
+    importance: Notifications.AndroidImportance.HIGH,
+    vibrationPattern: [0, 250, 250, 250],
+    lightColor: '#e5a93c',
+    sound: 'default',
+  }).catch(() => {});
+}
 
 export async function scheduleDailyVerse(verse = 'በመጀመሪያ መጉሥጠር በዓለም።') {
   if (Platform.OS === 'web') {
@@ -34,6 +45,7 @@ export async function scheduleDailyVerse(verse = 'በመጀመሪያ መጉሥ�
        content: {
          title: 'Daily Bible Verse',
          body: verse,
+         channelId: 'daily-verses',
        },
        trigger,
      });
@@ -73,6 +85,7 @@ export async function setupBackgroundNotifications() {
         content: {
           title: 'Daily Manna',
           body: randomVerseData.textAm,
+          channelId: 'daily-verses',
         },
         trigger,
       });

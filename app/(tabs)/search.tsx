@@ -21,6 +21,7 @@ import {
 import { useThemeColor } from '@/hooks/use-theme-color';
 import { useBible } from '@/context/BibleContext';
 import AppScreenLayout from '@/components/AppScreenLayout';
+import OrthodoxCross from '@/components/OrthodoxCross';
 import { BIBLE_BOOKS } from '@/constants/bibleBooks';
 
 export default function SearchScreen() {
@@ -442,7 +443,7 @@ export default function SearchScreen() {
           ) : (
             <View style={styles.emptyContainer}>
               <View style={styles.emptyIconBg}>
-                <Ionicons name={query ? 'search-outline' : 'book-outline'} size={36} color="#e5a93c" />
+                <OrthodoxCross size={40} variant="axum" glow={!query} />
               </View>
               <Text style={[styles.emptyText, { color: textColor }]}>
                 {query ? labels.noResult : labels.emptyPrompt}

@@ -3,7 +3,6 @@ import { View, StyleSheet, TouchableOpacity, Alert, Platform, Text } from 'react
 import * as Clipboard from 'expo-clipboard';
 import { Ionicons } from '@expo/vector-icons';
 import { speakBibleText, stopSpeech } from '@/lib/tts';
-
 import { useBible } from '@/context/BibleContext';
 import { useThemeColor } from '@/hooks/use-theme-color';
 import { ThemedText } from '@/components/themed-text';
@@ -28,7 +27,7 @@ export default function VerseItem({
   textEn,
   verseRef,
   fontSize = 20,
-  lineSpacing = 1.8,
+  lineSpacing = 1.68,
   theme = 'light',
   highlightColor,
   isSpeaking = false,
@@ -42,13 +41,14 @@ export default function VerseItem({
   const [localSpeaking, setLocalSpeaking] = useState(false);
   const activeSpeaking = isSpeaking || localSpeaking;
 
-  // If user switches language while local verse audio is active, seamlessly re-trigger with new language
+  // If user switches language while local verse audio is active, re-trigger with new language
   useEffect(() => {
     if (localSpeaking) {
       speakBibleText({
         textAm,
         textEn,
         appLang: language,
+        verse,
         onStart: () => setLocalSpeaking(true),
         onDone: () => setLocalSpeaking(false),
         onStopped: () => setLocalSpeaking(false),
@@ -80,10 +80,16 @@ export default function VerseItem({
     return '#475569';
   };
 
-  const getBarColor = () => {
-    if (theme === 'dark' || globalTheme === 'dark') return 'rgba(255,255,255,0.06)';
-    if (theme === 'sepia') return 'rgba(91,70,54,0.06)';
-    return 'rgba(15, 23, 42, 0.05)';
+  const getBtnBg = () => {
+    if (theme === 'dark' || globalTheme === 'dark') return 'rgba(255, 255, 255, 0.05)';
+    if (theme === 'sepia') return 'rgba(91, 70, 54, 0.06)';
+    return 'rgba(15, 23, 42, 0.04)';
+  };
+
+  const getBtnBorder = () => {
+    if (theme === 'dark' || globalTheme === 'dark') return 'rgba(212, 175, 55, 0.16)';
+    if (theme === 'sepia') return 'rgba(184, 134, 11, 0.18)';
+    return 'rgba(15, 23, 42, 0.08)';
   };
 
   const currentFontSize = fontSize;
@@ -114,6 +120,7 @@ export default function VerseItem({
       textAm,
       textEn,
       appLang: language,
+      verse,
       onStart: () => setLocalSpeaking(true),
       onDone: () => setLocalSpeaking(false),
       onStopped: () => setLocalSpeaking(false),
@@ -129,27 +136,30 @@ export default function VerseItem({
       style={[
         styles.container,
         activeSpeaking && {
-          backgroundColor: 'rgba(212, 175, 55, 0.12)',
+          backgroundColor: 'rgba(212, 175, 55, 0.1)',
           borderLeftWidth: 3,
           borderLeftColor: '#c69214',
-          borderRadius: 12,
+          borderRadius: 10,
         },
       ]}
     >
+      {/* Verse Number Column */}
       <View style={styles.leftCol}>
         <TouchableOpacity
           style={[
             styles.verseNumCircle,
-            isBookmarked && { backgroundColor: '#c69214' },
-            activeSpeaking && { borderColor: '#c69214', backgroundColor: 'rgba(212, 175, 55, 0.2)' },
+            isBookmarked && { backgroundColor: '#c69214', borderColor: '#e5a93c' },
+            activeSpeaking && { borderColor: '#c69214', backgroundColor: 'rgba(212, 175, 55, 0.25)' },
           ]}
           onPress={() => toggleBookmark(verseRef)}
           activeOpacity={0.7}
+          hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
+          accessibilityLabel={`Verse ${verse}`}
         >
           <Text
             style={[
               styles.verseNumText,
-              { color: isBookmarked ? '#fff' : (theme === 'dark' ? '#fff' : tintColor) },
+              { color: isBookmarked ? '#fff' : (theme === 'dark' || globalTheme === 'dark' ? '#f8fafc' : tintColor) },
             ]}
           >
             {verse}
@@ -158,19 +168,20 @@ export default function VerseItem({
         <View
           style={[
             styles.connector,
-            { backgroundColor: theme === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(128,128,128,0.15)' },
+            { backgroundColor: (theme === 'dark' || globalTheme === 'dark') ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)' },
           ]}
         />
       </View>
 
+      {/* Main Verse Text & Action Buttons */}
       <TouchableOpacity
         style={[
           styles.contentCol,
           highlightColor
-            ? { backgroundColor: highlightColor, borderRadius: 8, paddingHorizontal: 8, marginHorizontal: -4 }
+            ? { backgroundColor: highlightColor, borderRadius: 8, paddingHorizontal: 6, marginHorizontal: -3 }
             : null,
         ]}
-        activeOpacity={0.8}
+        activeOpacity={0.85}
         onLongPress={onLongPress || onOpenActionSheet}
         delayLongPress={300}
       >
@@ -213,7 +224,7 @@ export default function VerseItem({
                   color: getSubTextColor(),
                   fontSize: Math.round(currentFontSize * 0.88),
                   lineHeight: Math.round(dynamicLineHeight * 0.88),
-                  marginTop: 6,
+                  marginTop: 4,
                 },
               ]}
             >
@@ -222,38 +233,45 @@ export default function VerseItem({
           </View>
         )}
 
+        {/* Compact, Clean Verse Action Buttons */}
         <View style={styles.actionBar}>
           <TouchableOpacity
             onPress={speakVerse}
             style={[
               styles.actionBtn,
-              { backgroundColor: localSpeaking ? 'rgba(212, 175, 55, 0.2)' : getBarColor() },
+              { backgroundColor: localSpeaking ? 'rgba(212, 175, 55, 0.2)' : getBtnBg(), borderColor: getBtnBorder() },
             ]}
+            hitSlop={{ top: 6, bottom: 6, left: 4, right: 4 }}
           >
             <Ionicons
               name={localSpeaking ? 'stop-circle' : 'volume-medium-outline'}
-              size={15}
+              size={13}
               color={localSpeaking ? '#e5a93c' : tintColor}
             />
             <Text style={[styles.actionText, { color: localSpeaking ? '#e5a93c' : tintColor }]}>
               {localSpeaking
                 ? (language === 'en' ? 'Stop' : 'አቁም')
-                : (language === 'en' ? 'Listen' : (language === 'both' ? 'Listen/ስማ' : 'ስማ'))}
+                : (language === 'en' ? 'Listen' : (language === 'both' ? 'Listen' : 'ስማ'))}
             </Text>
           </TouchableOpacity>
 
-          <TouchableOpacity onPress={copyToClipboard} style={[styles.actionBtn, { backgroundColor: getBarColor() }]}>
-            <Ionicons name="copy-outline" size={15} color={tintColor} />
+          <TouchableOpacity
+            onPress={copyToClipboard}
+            style={[styles.actionBtn, { backgroundColor: getBtnBg(), borderColor: getBtnBorder() }]}
+            hitSlop={{ top: 6, bottom: 6, left: 4, right: 4 }}
+          >
+            <Ionicons name="copy-outline" size={13} color={tintColor} />
             <Text style={[styles.actionText, { color: tintColor }]}>
-              {language === 'en' ? 'Copy' : (language === 'both' ? 'Copy/ቅዳ' : 'ቅዳ')}
+              {language === 'en' ? 'Copy' : (language === 'both' ? 'Copy' : 'ቅዳ')}
             </Text>
           </TouchableOpacity>
 
           <TouchableOpacity
             onPress={onOpenActionSheet || onLongPress}
-            style={[styles.actionBtn, { backgroundColor: getBarColor() }]}
+            style={[styles.actionBtn, { backgroundColor: getBtnBg(), borderColor: getBtnBorder() }]}
+            hitSlop={{ top: 6, bottom: 6, left: 4, right: 4 }}
           >
-            <Ionicons name="ellipsis-horizontal" size={15} color={tintColor} />
+            <Ionicons name="ellipsis-horizontal" size={13} color={tintColor} />
             <Text style={[styles.actionText, { color: tintColor }]}>
               {language === 'en' ? 'More' : 'ተጨማሪ'}
             </Text>
@@ -267,63 +285,63 @@ export default function VerseItem({
 const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
-    paddingHorizontal: 20,
-    marginBottom: 16,
-    paddingVertical: 4,
+    paddingHorizontal: 14,
+    marginBottom: 10,
+    paddingVertical: 2,
   },
   leftCol: {
-    width: 36,
+    width: 28,
     alignItems: 'center',
-    marginRight: 6,
+    marginRight: 8,
+    paddingTop: 4,
   },
   verseNumCircle: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: 'rgba(128,128,128,0.08)',
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: 'rgba(128, 128, 128, 0.08)',
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: 'rgba(128,128,128,0.15)',
+    borderColor: 'rgba(128, 128, 128, 0.15)',
   },
   verseNumText: {
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: '800',
   },
   connector: {
     flex: 1,
-    width: 1.5,
+    width: 1,
     marginVertical: 4,
   },
   contentCol: {
     flex: 1,
-    paddingLeft: 4,
-    paddingBottom: 8,
+    paddingBottom: 4,
   },
   textAm: {
     fontSize: 20,
-    lineHeight: 36,
     fontWeight: '500',
-    letterSpacing: 0.3,
+    letterSpacing: 0.2,
   },
   textEn: {
     fontSize: 15,
-    lineHeight: 25,
-    marginTop: 4,
     letterSpacing: 0.1,
+    fontFamily: Platform.select({ ios: 'Georgia', android: 'serif', default: 'serif' }),
   },
   actionBar: {
     flexDirection: 'row',
-    marginTop: 10,
-    gap: 10,
+    alignItems: 'center',
+    marginTop: 6,
+    gap: 6,
   },
   actionBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    paddingVertical: 5,
-    paddingHorizontal: 10,
-    borderRadius: 12,
+    paddingVertical: 3,
+    paddingHorizontal: 8,
+    borderRadius: 8,
+    borderWidth: 1,
   },
   actionText: {
     fontSize: 11,

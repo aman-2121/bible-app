@@ -58,7 +58,7 @@ export default function GlobalControls({ showProfile = true }: { showProfile?: b
       {/* Profile / App Badge */}
       {showProfile && (
         <TouchableOpacity
-          onPress={() => router.push('/stats')}
+          onPress={() => router.push('/profile')}
           style={[styles.profilePill, { backgroundColor: pillBg, borderColor: pillBorder }]}
           activeOpacity={0.8}
         >

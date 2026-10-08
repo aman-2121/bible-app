@@ -1,13 +1,13 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   TouchableOpacity,
   useWindowDimensions,
-  Modal,
   Pressable,
-  ScrollView,
+  Animated,
+  Easing,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -16,6 +16,7 @@ import { useBible } from '@/context/BibleContext';
 import { useThemeColor } from '@/hooks/use-theme-color';
 import GlobalControls from '@/components/GlobalHeader';
 import LeftNavSidebar from '@/components/LeftNavSidebar';
+import OrthodoxCross from '@/components/OrthodoxCross';
 
 export interface AppScreenLayoutProps {
   title?: string;
@@ -33,14 +34,17 @@ export interface AppScreenLayoutProps {
  * AppScreenLayout — The unified, reusable application frame for all pages.
  *
  * Provides:
- * - Shared Top Header Bar with ☰ Hamburger Menu, Orthodox Cross ✝️, App Titles, and GlobalControls.
- * - Responsive Multi-Column Layout:
- *    • Left Column: LeftNavSidebar (Desktop/Tablet)
- *    • Center Column: Main Content (Full width by default)
- *    • Right Column: Rendered ONLY if page explicitly passes rightContent (e.g. Home Dashboard)
- * - Mobile Drawer Modal with backdrop and LeftNavSidebar.
- * - Consistent Dark/Night Mode (Primary reference, unchanged).
- * - Polished Light Mode (Soft off-white #f4f6fa, deep navy #091124, gold #e5a93c, subtle borders).
+ * - Shared Top Header Bar with ☰ Hamburger Menu toggle, Orthodox Cross, App Titles, and GlobalControls.
+ * - True Toggle Hamburger Menu:
+ *    • Closed → click ☰ → Sidebar opens
+ *    • Open → click ☰ → Sidebar closes
+ *    • Remains ☰ (never replaced with a cross)
+ *    • Accessible and clickable at all times (both desktop and mobile)
+ * - Synchronized Sidebar State via BibleContext across mobile and desktop.
+ * - Smooth, professional open/close transitions:
+ *    • Desktop: Smooth horizontal container width/opacity transition (0px ↔ 250px)
+ *    • Mobile: Smooth off-canvas slide & backdrop fade (-270px ↔ 0px)
+ * - Preserved existing Dark/Night Mode and sidebar design.
  */
 export default function AppScreenLayout({
   title,
@@ -57,7 +61,7 @@ export default function AppScreenLayout({
   const { width } = useWindowDimensions();
   const isWidescreen = width >= 1024;
 
-  const { theme, language } = useBible();
+  const { sidebarOpen, toggleSidebar, closeSidebar, theme, language } = useBible();
   const isDark = theme === 'dark';
 
   const backgroundColor = useThemeColor({}, 'background');
@@ -65,11 +69,64 @@ export default function AppScreenLayout({
   const textColor = useThemeColor({}, 'text');
   const borderColor = useThemeColor({}, 'border');
 
-  const [sidebarOpen, setSidebarOpen] = useState(isWidescreen);
+  // Animation drivers
+  const desktopAnim = useRef(new Animated.Value(isWidescreen && sidebarOpen ? 1 : 0)).current;
+  const mobileAnim = useRef(new Animated.Value(!isWidescreen && sidebarOpen ? 1 : 0)).current;
+
+  // Track if mobile drawer is mounted
+  const [mobileDrawerMounted, setMobileDrawerMounted] = useState(!isWidescreen && sidebarOpen);
 
   useEffect(() => {
-    setSidebarOpen(isWidescreen);
-  }, [isWidescreen]);
+    if (isWidescreen) {
+      Animated.timing(desktopAnim, {
+        toValue: sidebarOpen ? 1 : 0,
+        duration: 250,
+        easing: Easing.bezier(0.25, 0.1, 0.25, 1),
+        useNativeDriver: false,
+      }).start();
+    } else {
+      if (sidebarOpen) {
+        setMobileDrawerMounted(true);
+        Animated.timing(mobileAnim, {
+          toValue: 1,
+          duration: 250,
+          easing: Easing.bezier(0.25, 0.1, 0.25, 1),
+          useNativeDriver: false,
+        }).start();
+      } else {
+        Animated.timing(mobileAnim, {
+          toValue: 0,
+          duration: 220,
+          easing: Easing.bezier(0.25, 0.1, 0.25, 1),
+          useNativeDriver: false,
+        }).start(({ finished }) => {
+          if (finished) {
+            setMobileDrawerMounted(false);
+          }
+        });
+      }
+    }
+  }, [sidebarOpen, isWidescreen]);
+
+  const desktopWidth = desktopAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0, 250],
+  });
+
+  const desktopOpacity = desktopAnim.interpolate({
+    inputRange: [0, 0.25, 1],
+    outputRange: [0, 0.4, 1],
+  });
+
+  const mobileTranslateX = mobileAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [-270, 0],
+  });
+
+  const backdropOpacity = mobileAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0, 1],
+  });
 
   const defaultTitle = '81 መጽሐፍ ቅዱስ';
   const defaultSubtitle = language === 'am' ? 'የኢትዮጵያ ኦርቶዶክስ ተዋሕዶ' : 'Ethiopian Orthodox Bible';
@@ -79,10 +136,10 @@ export default function AppScreenLayout({
 
   return (
     <View style={[styles.rootContainer, { backgroundColor, paddingTop: insets.top }]}>
-      {/* 1. Global App Header */}
+      {/* 1. Global App Header — Always accessible with zIndex on top */}
       <View style={[styles.topHeaderBar, { borderBottomColor: borderColor }]}>
         <View style={styles.brandRow}>
-          {/* Back Button if navigating from a nested screen */}
+          {/* Back Button (←) if navigating from a nested screen */}
           {showBackBtn && (
             <TouchableOpacity
               style={[
@@ -95,12 +152,13 @@ export default function AppScreenLayout({
               onPress={onBackPress || (() => router.back())}
               activeOpacity={0.7}
               accessibilityLabel="Go Back"
+              accessibilityRole="button"
             >
               <Ionicons name="arrow-back" size={20} color={isDark ? '#e5a93c' : '#091124'} />
             </TouchableOpacity>
           )}
 
-          {/* Hamburger Menu Toggle (☰) */}
+          {/* Hamburger Menu Toggle (☰) — True toggle, never replaced by a cross */}
           <TouchableOpacity
             style={[
               styles.hamburgerBtn,
@@ -109,20 +167,21 @@ export default function AppScreenLayout({
                 borderColor: isDark ? 'rgba(255, 255, 255, 0.12)' : 'rgba(15, 23, 42, 0.1)',
               },
             ]}
-            onPress={() => setSidebarOpen(prev => !prev)}
+            onPress={toggleSidebar}
             activeOpacity={0.7}
-            accessibilityLabel="Toggle Menu"
+            accessibilityLabel="Toggle Navigation Sidebar"
+            accessibilityRole="button"
           >
             <Ionicons
-              name={sidebarOpen ? 'close' : 'menu'}
+              name="menu"
               size={22}
               color="#e5a93c"
             />
           </TouchableOpacity>
 
-          {/* Orthodox Cross Badge */}
+          {/* Traditional Ethiopian Orthodox Cross Badge */}
           <View style={styles.orthodoxCrossBadge}>
-            <Text style={styles.crossEmoji}>✝️</Text>
+            <OrthodoxCross size={24} variant="lalibela" glow={true} />
           </View>
 
           {/* Titles */}
@@ -143,11 +202,23 @@ export default function AppScreenLayout({
         </View>
       </View>
 
-      {/* 2. Responsive Body: 3-column on Tablet/Desktop, 1-column on Mobile */}
+      {/* 2. Responsive Body Layout */}
       <View style={styles.bodyLayout}>
-        {/* Desktop Left Sidebar */}
-        {isWidescreen && sidebarOpen && (
-          <LeftNavSidebar onClose={() => setSidebarOpen(false)} />
+        {/* Desktop Left Sidebar (Rendered on Widescreen only, smooth slide/collapse) */}
+        {isWidescreen && (
+          <Animated.View
+            style={[
+              styles.desktopSidebarWrapper,
+              {
+                width: desktopWidth,
+                opacity: desktopOpacity,
+              },
+            ]}
+          >
+            <View style={styles.sidebarInner}>
+              <LeftNavSidebar onClose={closeSidebar} />
+            </View>
+          </Animated.View>
         )}
 
         {/* Center Main Content Feed */}
@@ -155,7 +226,7 @@ export default function AppScreenLayout({
           {children}
         </View>
 
-        {/* Optional Page-Specific Desktop Right Column (Rendered ONLY when passed, e.g. on Home Page) */}
+        {/* Optional Desktop Right Column (Rendered ONLY when passed, e.g. on Home Page) */}
         {isWidescreen && rightContent ? (
           <View style={[styles.rightDashboardColumn, { borderLeftColor: borderColor }]}>
             {rightContent}
@@ -166,34 +237,45 @@ export default function AppScreenLayout({
       {/* 3. Floating Action (e.g. Journal FAB) */}
       {floatingAction}
 
-      {/* 4. Mobile Drawer Modal (Identical across all pages) */}
-      {!isWidescreen && (
-        <Modal
-          visible={sidebarOpen}
-          transparent={true}
-          animationType="fade"
-          onRequestClose={() => setSidebarOpen(false)}
+      {/* 4. Mobile Drawer Overlay (Smooth off-canvas slide, header remains accessible at all times) */}
+      {!isWidescreen && mobileDrawerMounted && (
+        <View
+          style={[
+            styles.drawerOverlay,
+            { top: insets.top + 57 },
+          ]}
         >
-          <View style={styles.drawerOverlay}>
+          {/* Animated Dim Backdrop */}
+          <Animated.View
+            style={[
+              styles.drawerBackdrop,
+              {
+                opacity: backdropOpacity,
+              },
+            ]}
+          >
             <Pressable
-              style={styles.drawerBackdrop}
-              onPress={() => setSidebarOpen(false)}
+              style={StyleSheet.absoluteFill}
+              onPress={closeSidebar}
+              accessibilityLabel="Close sidebar backdrop"
             />
-            <View
-              style={[
-                styles.drawerContent,
-                {
-                  backgroundColor: surfaceColor,
-                  paddingTop: insets.top,
-                  borderRightColor: borderColor,
-                  borderRightWidth: isDark ? 0 : 1,
-                },
-              ]}
-            >
-              <LeftNavSidebar onClose={() => setSidebarOpen(false)} />
-            </View>
-          </View>
-        </Modal>
+          </Animated.View>
+
+          {/* Animated Sliding Drawer */}
+          <Animated.View
+            style={[
+              styles.drawerContent,
+              {
+                backgroundColor: surfaceColor,
+                transform: [{ translateX: mobileTranslateX }],
+                borderRightColor: borderColor,
+                borderRightWidth: isDark ? 0 : 1,
+              },
+            ]}
+          >
+            <LeftNavSidebar onClose={closeSidebar} />
+          </Animated.View>
+        </View>
       )}
     </View>
   );
@@ -211,6 +293,9 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     borderBottomWidth: 1,
     borderBottomColor: 'rgba(255, 255, 255, 0.06)',
+    zIndex: 100,
+    elevation: 10,
+    position: 'relative',
   },
   brandRow: {
     flexDirection: 'row',
@@ -231,9 +316,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     borderWidth: 1,
     borderColor: 'rgba(212, 175, 55, 0.3)',
-  },
-  crossEmoji: {
-    fontSize: 20,
   },
   appMainTitle: {
     fontSize: 17,
@@ -263,6 +345,14 @@ const styles = StyleSheet.create({
     flex: 1,
     flexDirection: 'row',
   },
+  desktopSidebarWrapper: {
+    overflow: 'hidden',
+    height: '100%',
+  },
+  sidebarInner: {
+    width: 250,
+    height: '100%',
+  },
   mainContentColumn: {
     flex: 1,
   },
@@ -272,12 +362,17 @@ const styles = StyleSheet.create({
     borderLeftColor: 'rgba(255, 255, 255, 0.08)',
   },
   drawerOverlay: {
-    flex: 1,
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    zIndex: 90,
+    elevation: 9,
     flexDirection: 'row',
   },
   drawerBackdrop: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(5, 10, 25, 0.7)',
+    backgroundColor: 'rgba(5, 10, 25, 0.72)',
   },
   drawerContent: {
     width: 270,
@@ -285,7 +380,7 @@ const styles = StyleSheet.create({
     elevation: 20,
     shadowColor: '#000',
     shadowOffset: { width: 6, height: 0 },
-    shadowOpacity: 0.4,
+    shadowOpacity: 0.45,
     shadowRadius: 20,
   },
 });

@@ -4,6 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { router, usePathname } from 'expo-router';
 import { useBible } from '@/context/BibleContext';
 import { useThemeColor } from '@/hooks/use-theme-color';
+import OrthodoxCross from '@/components/OrthodoxCross';
 
 interface LeftNavSidebarProps {
   onClose?: () => void;
@@ -26,6 +27,7 @@ export default function LeftNavSidebar({ onClose }: LeftNavSidebarProps) {
     { id: 'bookmarks', route: '/(tabs)/bookmarks', label: language === 'am' ? 'ተወዳጆች' : 'Bookmarks', icon: 'bookmark-outline' },
     { id: 'daily', route: '/(tabs)/daily', label: language === 'am' ? 'ዕለታዊ መና' : 'Daily Manna', icon: 'sunny-outline' },
     { id: 'stats', route: '/stats', label: language === 'am' ? 'የንባብ ጉዞዬ' : 'Statistics', icon: 'bar-chart-outline' },
+    { id: 'profile', route: '/profile', label: language === 'am' ? 'ስለ አልሚው' : 'Developer Profile', icon: 'person-outline' },
   ];
 
   const handleNav = (route: string) => {
@@ -39,7 +41,7 @@ export default function LeftNavSidebar({ onClose }: LeftNavSidebarProps) {
       <View style={styles.brandRow}>
         <View style={styles.brandLeft}>
           <View style={styles.crossCircle}>
-            <Text style={styles.crossSymbol}>✝️</Text>
+            <OrthodoxCross size={22} variant="gondar" glow={true} />
           </View>
           <View>
             <Text style={[styles.brandTitle, { color: textColor }]}>81 መጽሐፍ ቅዱስ</Text>
@@ -94,7 +96,7 @@ export default function LeftNavSidebar({ onClose }: LeftNavSidebarProps) {
 
       {/* Ge'ez Watermark Footer */}
       <View style={[styles.footerWrapper, { borderTopColor: borderColor }]}>
-        <Text style={styles.footerCross}>✝️</Text>
+        <OrthodoxCross size={18} variant="meskel" glow={true} />
         <Text style={styles.footerAmharic}>በእግዚአብሔር ጸጋ</Text>
         <Text style={[styles.footerEnglish, { color: textColor + '77' }]}>By God's Grace</Text>
       </View>

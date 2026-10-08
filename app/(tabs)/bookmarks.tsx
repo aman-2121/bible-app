@@ -26,6 +26,7 @@ import { useBible } from '@/context/BibleContext';
 import { useThemeColor } from '@/hooks/use-theme-color';
 import { getVersesByRefs } from '@/lib/bibleLoader';
 import AppScreenLayout from '@/components/AppScreenLayout';
+import OrthodoxCross from '@/components/OrthodoxCross';
 import {
   getCollections,
   createCollection,
@@ -592,7 +593,7 @@ export default function BookmarksScreen() {
           ListEmptyComponent={
             <View style={styles.emptyContainer}>
               <View style={styles.emptyIconBg}>
-                <Ionicons name="bookmark-outline" size={36} color="#e5a93c" />
+                <OrthodoxCross size={40} variant="gondar" glow={true} />
               </View>
               <Text style={[styles.emptyText, { color: textColor }]}>
                 {labels.emptyTitle}
