@@ -41,7 +41,7 @@ export default function LeftNavSidebar({ onClose }: LeftNavSidebarProps) {
       <View style={styles.brandRow}>
         <View style={styles.brandLeft}>
           <View style={styles.crossCircle}>
-            <OrthodoxCross size={22} variant="gondar" glow={true} />
+            <OrthodoxCross size={22} variant="meskel" glow={true} />
           </View>
           <View>
             <Text style={[styles.brandTitle, { color: textColor }]}>81 መጽሐፍ ቅዱስ</Text>

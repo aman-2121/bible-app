@@ -14,8 +14,7 @@
     </linearGradient>
   </defs>
 
-  <!-- Background Dark Navy for Favicon / App Icon -->
-  <rect width="120" height="120" rx="28" fill="#070e1e"/>
+  <!-- Transparent Background for authentic display across light/dark modes -->
 
   <!-- Top, Bottom, Left, Right Finials -->
   <path d="M60 4 L64 12 L60 17 L56 12 Z M60 10 L68 18 L60 22 L52 18 Z" fill="url(#ethiopianGoldGrad)"/>

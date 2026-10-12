@@ -558,6 +558,7 @@ export interface AppSettings {
   fontFamily: string;
   autoScrollSpeed?: number;
   keepScreenAwake?: boolean;
+  crossVariant?: 'lalibela' | 'gondar' | 'axum' | 'meskel';
 }
 
 export const DEFAULT_SETTINGS: AppSettings = {
@@ -568,6 +569,7 @@ export const DEFAULT_SETTINGS: AppSettings = {
   fontFamily: 'System',
   autoScrollSpeed: 0,
   keepScreenAwake: true,
+  crossVariant: 'meskel',
 };
 
 export async function getSettings(): Promise<AppSettings> {

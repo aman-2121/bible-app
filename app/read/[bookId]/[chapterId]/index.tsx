@@ -19,7 +19,7 @@ import VerseItem from '@/components/VerseItem';
 import { useThemeColor } from '@/hooks/use-theme-color';
 import { stopSpeech } from '@/lib/tts';
 
-// Modals & Panels
+import OrthodoxCross from '@/components/OrthodoxCross';
 import ReadingSettingsModal from '@/components/ReadingSettingsModal';
 import VerseActionSheet from '@/components/VerseActionSheet';
 import AudioPlayerBar from '@/components/AudioPlayerBar';
@@ -62,7 +62,7 @@ export default function ChapterScreen() {
   // Highlights State
   const [highlights, setHighlights] = useState<Highlight[]>([]);
 
-  const { language, toggleLanguage, theme, toggleTheme } = useBible();
+  const { language, toggleLanguage, theme, toggleTheme, crossVariant } = useBible();
   const isDark = theme === 'dark' || readingTheme === 'dark';
   const backgroundColor = useThemeColor({}, 'background');
   const surfaceColor = useThemeColor({}, 'surface');
@@ -266,6 +266,11 @@ export default function ChapterScreen() {
           >
             <Ionicons name="arrow-back" size={19} color={getHeaderTextColor()} />
           </TouchableOpacity>
+
+          {/* Ethiopian Orthodox Cross Badge (One Fixed Meskel Cross) */}
+          <View style={styles.orthodoxCrossBadge}>
+            <OrthodoxCross size={20} variant="meskel" glow={true} />
+          </View>
 
           {/* Compact Book & Chapter Title */}
           <View style={styles.titleContainer}>
@@ -579,6 +584,17 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  orthodoxCrossBadge: {
+    width: 34,
+    height: 34,
+    borderRadius: 11,
+    backgroundColor: 'rgba(212, 175, 55, 0.15)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(212, 175, 55, 0.3)',
+    marginLeft: 6,
   },
   titleContainer: {
     flex: 1,

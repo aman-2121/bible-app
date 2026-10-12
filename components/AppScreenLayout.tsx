@@ -179,9 +179,9 @@ export default function AppScreenLayout({
             />
           </TouchableOpacity>
 
-          {/* Traditional Ethiopian Orthodox Cross Badge */}
+          {/* Traditional Ethiopian Orthodox Cross Badge (One Fixed Meskel Cross) */}
           <View style={styles.orthodoxCrossBadge}>
-            <OrthodoxCross size={24} variant="lalibela" glow={true} />
+            <OrthodoxCross size={24} variant="meskel" glow={true} />
           </View>
 
           {/* Titles */}
@@ -289,7 +289,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 20,
+    paddingHorizontal: 14,
     paddingVertical: 10,
     borderBottomWidth: 1,
     borderBottomColor: 'rgba(255, 255, 255, 0.06)',

@@ -9,6 +9,7 @@ interface BibleContextType {
   theme: 'light' | 'dark' | 'system';
   bookmarks: string[];
   sidebarOpen: boolean;
+  crossVariant: 'lalibela' | 'gondar' | 'axum' | 'meskel';
   setCurrentBook: (id: string) => void;
   setCurrentChapter: (id: string) => void;
   toggleLanguage: () => void;
@@ -20,6 +21,7 @@ interface BibleContextType {
   toggleSidebar: () => void;
   closeSidebar: () => void;
   openSidebar: () => void;
+  setCrossVariant: (variant: 'lalibela' | 'gondar' | 'axum' | 'meskel') => void;
 }
 
 const BibleContext = createContext<BibleContextType | undefined>(undefined);
@@ -30,6 +32,7 @@ export function BibleProvider({ children }: { children: ReactNode }) {
   const [language, setLanguageState] = useState<'am' | 'en' | 'both'>('am');
   const [theme, setThemeState] = useState<'light' | 'dark' | 'system'>('system');
   const [bookmarks, setBookmarks] = useState<string[]>([]);
+  const [crossVariant, setCrossVariantState] = useState<'lalibela' | 'gondar' | 'axum' | 'meskel'>('meskel');
   const [sidebarOpen, setSidebarOpenState] = useState(() => {
     try {
       return Dimensions.get('window').width >= 1024;
@@ -43,6 +46,7 @@ export function BibleProvider({ children }: { children: ReactNode }) {
     getSettings().then(settings => {
       if (settings.language) setLanguageState(settings.language as any);
       if (settings.theme) setThemeState(settings.theme as any);
+      if (settings.crossVariant) setCrossVariantState(settings.crossVariant);
     });
   }, []);
 
@@ -52,27 +56,32 @@ export function BibleProvider({ children }: { children: ReactNode }) {
   const toggleLanguage = () => {
     setLanguageState(prev => {
       const next = prev === 'am' ? 'en' : (prev === 'en' ? 'both' : 'am');
-      saveSettings({ language: next, theme });
+      saveSettings({ language: next, theme, crossVariant });
       return next;
     });
   };
 
   const setLanguage = (next: 'am' | 'en' | 'both') => {
     setLanguageState(next);
-    saveSettings({ language: next, theme });
+    saveSettings({ language: next, theme, crossVariant });
   };
 
   const toggleTheme = () => {
     setThemeState(prev => {
       const next = prev === 'dark' ? 'light' : 'dark';
-      saveSettings({ language, theme: next });
+      saveSettings({ language, theme: next, crossVariant });
       return next;
     });
   };
 
   const setTheme = (next: 'light' | 'dark' | 'system') => {
     setThemeState(next);
-    saveSettings({ language, theme: next });
+    saveSettings({ language, theme: next, crossVariant });
+  };
+
+  const setCrossVariant = (variant: 'lalibela' | 'gondar' | 'axum' | 'meskel') => {
+    setCrossVariantState(variant);
+    saveSettings({ crossVariant: variant });
   };
 
   const toggleBookmark = async (verseRef: string) => {
@@ -87,9 +96,9 @@ export function BibleProvider({ children }: { children: ReactNode }) {
 
   return (
     <BibleContext.Provider value={{ 
-      currentBook, currentChapter, language, theme, bookmarks, sidebarOpen,
+      currentBook, currentChapter, language, theme, bookmarks, sidebarOpen, crossVariant,
       setCurrentBook, setCurrentChapter, toggleLanguage, setLanguage, toggleTheme, setTheme, toggleBookmark,
-      setSidebarOpen, toggleSidebar, closeSidebar, openSidebar,
+      setSidebarOpen, toggleSidebar, closeSidebar, openSidebar, setCrossVariant,
     }}>
       {children}
     </BibleContext.Provider>

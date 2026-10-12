@@ -96,7 +96,12 @@ export default function VerseItem({
   const dynamicLineHeight = Math.round(currentFontSize * lineSpacing);
 
   const copyToClipboard = async () => {
-    const txt = language === 'en' ? textEn || textAm : textAm;
+    let txt = textAm;
+    if (language === 'en') {
+      txt = textEn || textAm;
+    } else if (language === 'both') {
+      txt = textEn ? `${textAm}\n${textEn}` : textAm;
+    }
     await Clipboard.setStringAsync(txt);
     if (Platform.OS === 'web') {
       console.log('Copied to clipboard');
@@ -217,19 +222,21 @@ export default function VerseItem({
             >
               {textAm}
             </ThemedText>
-            <Text
-              style={[
-                styles.textEn,
-                {
-                  color: getSubTextColor(),
-                  fontSize: Math.round(currentFontSize * 0.88),
-                  lineHeight: Math.round(dynamicLineHeight * 0.88),
-                  marginTop: 4,
-                },
-              ]}
-            >
-              {textEn || '(English translation loading or offline)'}
-            </Text>
+            {textEn ? (
+              <Text
+                style={[
+                  styles.textEn,
+                  {
+                    color: getSubTextColor(),
+                    fontSize: Math.round(currentFontSize * 0.9),
+                    lineHeight: Math.round(dynamicLineHeight * 0.9),
+                    marginTop: 5,
+                  },
+                ]}
+              >
+                {textEn}
+              </Text>
+            ) : null}
           </View>
         )}
 

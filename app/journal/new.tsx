@@ -15,6 +15,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useBible } from '@/context/BibleContext';
 import { useThemeColor } from '@/hooks/use-theme-color';
 import { addJournalEntry, JournalCategory } from '@/lib/storage';
+import OrthodoxCross from '@/components/OrthodoxCross';
 
 const CATEGORIES: Array<{ id: JournalCategory; labelAm: string; labelEn: string; icon: string }> = [
   { id: 'prayer', labelAm: 'ጸሎት', labelEn: 'Prayer', icon: 'hand-left' },
@@ -89,14 +90,20 @@ export default function NewJournalEntryScreen() {
     >
       {/* Top Header */}
       <View style={[styles.header, { borderBottomColor: borderColor }]}>
-        <TouchableOpacity
-          style={[styles.iconBtn, { backgroundColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(15, 23, 42, 0.05)', borderColor }]}
-          onPress={() => router.back()}
-        >
-          <Ionicons name="close" size={20} color={textColor} />
-        </TouchableOpacity>
+        <View style={styles.headerLeftGroup}>
+          <TouchableOpacity
+            style={[styles.iconBtn, { backgroundColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(15, 23, 42, 0.05)', borderColor }]}
+            onPress={() => router.back()}
+          >
+            <Ionicons name="close" size={20} color={textColor} />
+          </TouchableOpacity>
 
-        <Text style={[styles.headerTitle, { color: textColor }]}>{labels.header}</Text>
+          <View style={styles.orthodoxCrossBadge}>
+            <OrthodoxCross size={20} variant="meskel" glow={true} />
+          </View>
+
+          <Text style={[styles.headerTitle, { color: textColor }]}>{labels.header}</Text>
+        </View>
 
         <TouchableOpacity
           style={[styles.saveBtn, { backgroundColor: '#e5a93c' }]}
@@ -215,6 +222,22 @@ const styles = StyleSheet.create({
     borderRadius: 18,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  headerLeftGroup: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    flex: 1,
+  },
+  orthodoxCrossBadge: {
+    width: 34,
+    height: 34,
+    borderRadius: 11,
+    backgroundColor: 'rgba(212, 175, 55, 0.15)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(212, 175, 55, 0.3)',
   },
   headerTitle: {
     fontSize: 17,

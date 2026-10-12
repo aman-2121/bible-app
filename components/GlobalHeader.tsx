@@ -31,22 +31,24 @@ export default function GlobalControls({ showProfile = true }: { showProfile?: b
 
   return (
     <View style={styles.row}>
-      {/* Language Trigger Pill */}
+      {/* Language Trigger Button (Icon-Only) */}
       <TouchableOpacity
         onPress={() => setShowDropdown(true)}
-        style={[styles.langPill, { backgroundColor: pillBg, borderColor: pillBorder }]}
+        style={[styles.circleBtn, { backgroundColor: pillBg, borderColor: pillBorder }]}
         activeOpacity={0.8}
+        accessibilityLabel="Select Language"
+        accessibilityRole="button"
       >
-        <Ionicons name="globe-outline" size={16} color="#e5a93c" />
-        <Text style={[styles.langText, { color: textColor }]}>{currentLang.label}</Text>
-        <Ionicons name="chevron-down" size={13} color={textColor + '88'} />
+        <Ionicons name="globe-outline" size={17} color="#e5a93c" />
       </TouchableOpacity>
 
-      {/* Theme Toggle Button */}
+      {/* Theme Toggle Button (Icon-Only) */}
       <TouchableOpacity
         onPress={toggleTheme}
         style={[styles.circleBtn, { backgroundColor: pillBg, borderColor: pillBorder }]}
         activeOpacity={0.8}
+        accessibilityLabel="Toggle Theme"
+        accessibilityRole="button"
       >
         <Ionicons
           name={theme === 'dark' ? 'sunny' : 'moon'}
@@ -55,17 +57,16 @@ export default function GlobalControls({ showProfile = true }: { showProfile?: b
         />
       </TouchableOpacity>
 
-      {/* Profile / App Badge */}
+      {/* Profile Button (Icon-Only) */}
       {showProfile && (
         <TouchableOpacity
           onPress={() => router.push('/profile')}
-          style={[styles.profilePill, { backgroundColor: pillBg, borderColor: pillBorder }]}
+          style={[styles.circleBtn, { backgroundColor: pillBg, borderColor: pillBorder }]}
           activeOpacity={0.8}
+          accessibilityLabel="Profile"
+          accessibilityRole="button"
         >
-          <View style={styles.avatarCircle}>
-            <Ionicons name="person" size={13} color="#080f21" />
-          </View>
-          <Text style={[styles.profileName, { color: textColor }]}>Mezamurit</Text>
+          <Ionicons name="person" size={15} color="#e5a93c" />
         </TouchableOpacity>
       )}
 
