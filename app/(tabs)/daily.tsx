@@ -18,6 +18,7 @@ import { updateStreak, StreakData } from '@/lib/storage';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Speech from 'expo-speech';
 import { speakBibleText, stopSpeech } from '@/lib/tts';
+import { isFabricatedEnglish, cleanAmharicVerse } from '@/lib/englishBible';
 import { useFocusEffect, router } from 'expo-router';
 import AppScreenLayout from '@/components/AppScreenLayout';
 
@@ -107,14 +108,29 @@ export default function DailyScreen() {
   const shareDailyVerse = async () => {
     if (!dailyVerse) return;
     try {
-      const verse = language === 'am' ? dailyVerse.textAm : dailyVerse.textEn;
+      const hasValidEn = Boolean(dailyVerse.textEn && dailyVerse.textEn.trim().length > 0 && !isFabricatedEnglish(dailyVerse.textEn));
+      const cleanAm = cleanAmharicVerse(dailyVerse.textAm || '');
       const ref =
         language === 'am'
           ? `${dailyVerse.bookName} ${dailyVerse.chapter}:${dailyVerse.verse}`
+          : language === 'both'
+          ? `${dailyVerse.bookName} (${dailyVerse.bookNameEn || ''}) ${dailyVerse.chapter}:${dailyVerse.verse}`
           : `${dailyVerse.bookNameEn || dailyVerse.bookName} ${dailyVerse.chapter}:${dailyVerse.verse}`;
 
+      let msg = '';
+      if (language === 'am') {
+        msg = `“${cleanAm}”\n\n— ${ref}`;
+      } else if (language === 'en') {
+        msg = hasValidEn
+          ? `“${dailyVerse.textEn}”\n\n— ${ref}`
+          : `[English translation unavailable for this verse]\n\n— ${ref}`;
+      } else {
+        const enPart = hasValidEn ? dailyVerse.textEn : '[English translation unavailable]';
+        msg = `አማርኛ:\n“${cleanAm}”\n\nENGLISH:\n“${enPart}”\n\n— ${ref}`;
+      }
+
       await Share.share({
-        message: `“${verse}”\n\n— ${ref}\n\nዕለታዊ መና (Daily Manna) - የኢትዮጵያ ኦርቶዶክስ ተዋሕዶ 81 መጽሐፍ ቅዱስ`,
+        message: `${msg}\n\nዕለታዊ መና (Daily Manna) - የኢትዮጵያ ኦርቶዶክስ ተዋሕዶ 81 መጽሐፍ ቅዱስ`,
       });
     } catch (e) {
       console.log(e);
@@ -198,14 +214,45 @@ export default function DailyScreen() {
                   </TouchableOpacity>
                 </View>
 
-                <Text style={[styles.heroVerseAm, { color: textColor }]}>
-                  “{dailyVerse?.textAm}”
-                </Text>
-
-                {language !== 'am' && dailyVerse?.textEn && (
-                  <Text style={[styles.heroVerseEn, { color: textColor + '88' }]}>
-                    “{dailyVerse.textEn}”
+                {language === 'am' && (
+                  <Text style={[styles.heroVerseAm, { color: textColor }]}>
+                    “{cleanAmharicVerse(dailyVerse?.textAm || '')}”
                   </Text>
+                )}
+
+                {language === 'en' && (
+                  (dailyVerse?.textEn && !isFabricatedEnglish(dailyVerse.textEn)) ? (
+                    <Text style={[styles.heroVerseEn, { color: textColor, fontSize: 18, lineHeight: 28 }]}>
+                      “{dailyVerse.textEn}”
+                    </Text>
+                  ) : (
+                    <Text style={[styles.heroVerseEn, { color: textColor + '88', fontStyle: 'italic' }]}>
+                      [English translation unavailable for this verse]
+                    </Text>
+                  )
+                )}
+
+                {language === 'both' && (
+                  <View style={{ gap: 8 }}>
+                    <View>
+                      <Text style={{ fontSize: 10, fontWeight: '800', color: '#e5a93c', marginBottom: 2 }}>አማርኛ</Text>
+                      <Text style={[styles.heroVerseAm, { color: textColor }]}>
+                        “{cleanAmharicVerse(dailyVerse?.textAm || '')}”
+                      </Text>
+                    </View>
+                    <View style={{ borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.08)', paddingTop: 6 }}>
+                      <Text style={{ fontSize: 9.5, fontWeight: '800', color: '#60a5fa', marginBottom: 2 }}>ENGLISH</Text>
+                      {(dailyVerse?.textEn && !isFabricatedEnglish(dailyVerse.textEn)) ? (
+                        <Text style={[styles.heroVerseEn, { color: textColor + 'dd' }]}>
+                          “{dailyVerse.textEn}”
+                        </Text>
+                      ) : (
+                        <Text style={[styles.heroVerseEn, { color: textColor + '77', fontStyle: 'italic' }]}>
+                          [English translation unavailable for this verse]
+                        </Text>
+                      )}
+                    </View>
+                  </View>
                 )}
 
                 <View style={[styles.heroDivider, { backgroundColor: borderColor }]} />

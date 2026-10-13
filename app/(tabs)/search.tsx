@@ -23,6 +23,7 @@ import { useBible } from '@/context/BibleContext';
 import AppScreenLayout from '@/components/AppScreenLayout';
 import OrthodoxCross from '@/components/OrthodoxCross';
 import { BIBLE_BOOKS } from '@/constants/bibleBooks';
+import { isFabricatedEnglish, cleanAmharicVerse } from '@/lib/englishBible';
 
 export default function SearchScreen() {
   const { width } = useWindowDimensions();
@@ -425,10 +426,37 @@ export default function SearchScreen() {
               </View>
             </View>
 
-            <Text style={[styles.verseAm, { color: textColor }]}>{item.textAm}</Text>
+            {language === 'am' && (
+              <Text style={[styles.verseAm, { color: textColor }]}>{cleanAmharicVerse(item.textAm)}</Text>
+            )}
 
-            {item.textEn && language !== 'am' && (
-              <Text style={[styles.verseEn, { color: textColor + '88' }]}>{item.textEn}</Text>
+            {language === 'en' && (
+              (item.textEn && !isFabricatedEnglish(item.textEn)) ? (
+                <Text style={[styles.verseEn, { color: textColor }]}>{item.textEn}</Text>
+              ) : (
+                <Text style={[styles.verseEn, { color: textColor + '88', fontStyle: 'italic' }]}>
+                  [English translation unavailable for this verse]
+                </Text>
+              )
+            )}
+
+            {language === 'both' && (
+              <View style={{ gap: 6 }}>
+                <View>
+                  <Text style={{ fontSize: 10, fontWeight: '800', color: '#e5a93c', marginBottom: 2 }}>አማርኛ</Text>
+                  <Text style={[styles.verseAm, { color: textColor }]}>{cleanAmharicVerse(item.textAm)}</Text>
+                </View>
+                <View style={{ borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.06)', paddingTop: 4 }}>
+                  <Text style={{ fontSize: 9.5, fontWeight: '800', color: '#60a5fa', marginBottom: 2 }}>ENGLISH</Text>
+                  {(item.textEn && !isFabricatedEnglish(item.textEn)) ? (
+                    <Text style={[styles.verseEn, { color: textColor + 'cc' }]}>{item.textEn}</Text>
+                  ) : (
+                    <Text style={[styles.verseEn, { color: textColor + '77', fontStyle: 'italic' }]}>
+                      [English translation unavailable for this verse]
+                    </Text>
+                  )}
+                </View>
+              </View>
             )}
           </TouchableOpacity>
         )}

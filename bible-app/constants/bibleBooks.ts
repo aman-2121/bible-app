@@ -233,7 +233,7 @@ export const BIBLE_BOOKS = [
   {
     "id": "34",
     "name": "መጽሐፈ ሲራክ",
-    "nameEn": "book of sirach",
+    "nameEn": "Sirach",
     "testament": "old",
     "chapters": 51
   },
@@ -268,7 +268,7 @@ export const BIBLE_BOOKS = [
   {
     "id": "39",
     "name": "ተረፈ ኤርምያስ",
-    "nameEn": "Thr letter of Jeremiah",
+    "nameEn": "The Letter of Jeremiah",
     "testament": "old",
     "chapters": 1
   },

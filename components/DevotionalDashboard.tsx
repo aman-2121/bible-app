@@ -8,6 +8,7 @@ import { useThemeColor } from '@/hooks/use-theme-color';
 import { BIBLE_BOOKS } from '@/constants/bibleBooks';
 import { READING_PLANS, ReadingPlanDef } from '@/app/(tabs)/plans';
 import { getDailyVerse } from '@/lib/bibleLoader';
+import { isFabricatedEnglish, cleanAmharicVerse } from '@/lib/englishBible';
 import {
   getStreak,
   getReadingStats,
@@ -254,7 +255,11 @@ export default function DevotionalDashboard() {
           {/* Actual Verse Text Snippet */}
           {dailyVerse && (
             <Text style={styles.mannaVerseText} numberOfLines={2}>
-              {language === 'en' && dailyVerse.textEn ? `“${dailyVerse.textEn}”` : `“${dailyVerse.textAm}”`}
+              {language === 'en'
+                ? (dailyVerse.textEn && !isFabricatedEnglish(dailyVerse.textEn) ? `“${dailyVerse.textEn}”` : '“English translation unavailable for this verse”')
+                : (language === 'both' && dailyVerse.textEn && !isFabricatedEnglish(dailyVerse.textEn)
+                  ? `“${cleanAmharicVerse(dailyVerse.textAm)}” • “${dailyVerse.textEn}”`
+                  : `“${cleanAmharicVerse(dailyVerse.textAm)}”`)}
             </Text>
           )}
         </View>

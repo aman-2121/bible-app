@@ -6,12 +6,16 @@ import { speakBibleText, stopSpeech } from '@/lib/tts';
 import { useBible } from '@/context/BibleContext';
 import { useThemeColor } from '@/hooks/use-theme-color';
 import { ThemedText } from '@/components/themed-text';
+import { isFabricatedEnglish, cleanAmharicVerse } from '@/lib/englishBible';
 
 interface VerseItemProps {
   verse: number;
   textAm: string;
   textEn?: string;
   verseRef: string;
+  bookName?: string;
+  bookNameEn?: string;
+  chapterId?: string;
   fontSize?: number;
   lineSpacing?: number;
   theme?: 'light' | 'sepia' | 'dark';
@@ -26,6 +30,9 @@ export default function VerseItem({
   textAm,
   textEn,
   verseRef,
+  bookName,
+  bookNameEn,
+  chapterId,
   fontSize = 20,
   lineSpacing = 1.68,
   theme = 'light',
@@ -41,12 +48,21 @@ export default function VerseItem({
   const [localSpeaking, setLocalSpeaking] = useState(false);
   const activeSpeaking = isSpeaking || localSpeaking;
 
+  const cleanAm = cleanAmharicVerse(textAm || '');
+  const hasValidEn = Boolean(textEn && textEn.trim().length > 0 && !isFabricatedEnglish(textEn));
+
   // If user switches language while local verse audio is active, re-trigger with new language
   useEffect(() => {
     if (localSpeaking) {
+      if (language === 'en' && !hasValidEn) {
+        stopSpeech();
+        setLocalSpeaking(false);
+        return;
+      }
+
       speakBibleText({
-        textAm,
-        textEn,
+        textAm: cleanAm,
+        textEn: hasValidEn ? textEn : undefined,
         appLang: language,
         verse,
         onStart: () => setLocalSpeaking(true),
@@ -96,12 +112,29 @@ export default function VerseItem({
   const dynamicLineHeight = Math.round(currentFontSize * lineSpacing);
 
   const copyToClipboard = async () => {
-    let txt = textAm;
-    if (language === 'en') {
-      txt = textEn || textAm;
-    } else if (language === 'both') {
-      txt = textEn ? `${textAm}\n${textEn}` : textAm;
+    let txt = '';
+    const bName =
+      language === 'am'
+        ? (bookName || '')
+        : language === 'both'
+        ? `${bookName || ''} (${bookNameEn || ''})`
+        : (bookNameEn || bookName || '');
+    const refSuffix = bName ? `\n— ${bName} ${chapterId ? chapterId + ':' : ''}${verse}` : '';
+
+    if (language === 'am') {
+      txt = `“${cleanAm}”${refSuffix}`;
+    } else if (language === 'en') {
+      if (hasValidEn) {
+        txt = `“${textEn}”${refSuffix}`;
+      } else {
+        txt = `[English translation unavailable for this verse]${refSuffix}`;
+      }
+    } else {
+      // Bilingual mode
+      const enSnippet = hasValidEn ? textEn : '[English translation unavailable]';
+      txt = `አማርኛ:\n“${cleanAm}”\n\nENGLISH:\n“${enSnippet}”${refSuffix}`;
     }
+
     await Clipboard.setStringAsync(txt);
     if (Platform.OS === 'web') {
       console.log('Copied to clipboard');
@@ -120,10 +153,20 @@ export default function VerseItem({
       return;
     }
 
+    if (language === 'en' && !hasValidEn) {
+      if (Platform.OS !== 'web') {
+        Alert.alert(
+          'Audio Unavailable',
+          'English narration is unavailable because the English translation is not available for this verse in this offline edition.'
+        );
+      }
+      return;
+    }
+
     await stopSpeech();
     const success = await speakBibleText({
-      textAm,
-      textEn,
+      textAm: cleanAm,
+      textEn: hasValidEn ? textEn : undefined,
       appLang: language,
       verse,
       onStart: () => setLocalSpeaking(true),
@@ -190,6 +233,7 @@ export default function VerseItem({
         onLongPress={onLongPress || onOpenActionSheet}
         delayLongPress={300}
       >
+        {/* 1. Amharic Mode */}
         {language === 'am' && (
           <ThemedText
             style={[
@@ -197,46 +241,110 @@ export default function VerseItem({
               { color: getTextColor(), fontSize: currentFontSize, lineHeight: dynamicLineHeight },
             ]}
           >
-            {textAm}
+            {cleanAm}
           </ThemedText>
         )}
 
+        {/* 2. English Mode */}
         {language === 'en' && (
-          <Text
-            style={[
-              styles.textEn,
-              { color: getTextColor(), fontSize: currentFontSize, lineHeight: dynamicLineHeight },
-            ]}
-          >
-            {textEn || textAm}
-          </Text>
-        )}
-
-        {language === 'both' && (
-          <View>
-            <ThemedText
+          hasValidEn ? (
+            <Text
               style={[
-                styles.textAm,
+                styles.textEn,
                 { color: getTextColor(), fontSize: currentFontSize, lineHeight: dynamicLineHeight },
               ]}
             >
-              {textAm}
-            </ThemedText>
-            {textEn ? (
-              <Text
+              {textEn}
+            </Text>
+          ) : (
+            <View style={styles.unavailableBox}>
+              <Ionicons name="information-circle-outline" size={15} color="#e5a93c" style={{ marginRight: 6 }} />
+              <Text style={[styles.unavailableText, { color: getSubTextColor() }]}>
+                English translation unavailable for this verse
+              </Text>
+            </View>
+          )
+        )}
+
+        {/* 3. Bilingual Mode (Both languages together, clearly labeled) */}
+        {language === 'both' && (
+          <View style={styles.bilingualWrapper}>
+            {/* Amharic Verse Block */}
+            <View style={styles.bilingualBlock}>
+              <View style={styles.langBadgeRow}>
+                <View
+                  style={[
+                    styles.langBadgeAm,
+                    {
+                      backgroundColor: (theme === 'dark' || globalTheme === 'dark')
+                        ? 'rgba(212, 175, 55, 0.18)'
+                        : 'rgba(212, 175, 55, 0.12)',
+                      borderColor: (theme === 'dark' || globalTheme === 'dark')
+                        ? 'rgba(212, 175, 55, 0.38)'
+                        : 'rgba(212, 175, 55, 0.28)',
+                    },
+                  ]}
+                >
+                  <Text style={styles.langBadgeAmText}>አማርኛ</Text>
+                </View>
+                <Text style={[styles.langBadgeSub, { color: getSubTextColor() }]}>
+                  — የመጀመሪያው ጽሑፍ
+                </Text>
+              </View>
+              <ThemedText
                 style={[
-                  styles.textEn,
-                  {
-                    color: getSubTextColor(),
-                    fontSize: Math.round(currentFontSize * 0.9),
-                    lineHeight: Math.round(dynamicLineHeight * 0.9),
-                    marginTop: 5,
-                  },
+                  styles.textAm,
+                  { color: getTextColor(), fontSize: currentFontSize, lineHeight: dynamicLineHeight },
                 ]}
               >
-                {textEn}
-              </Text>
-            ) : null}
+                {cleanAm}
+              </ThemedText>
+            </View>
+
+            {/* English Verse Block */}
+            <View style={[styles.bilingualBlock, styles.bilingualBlockEn]}>
+              <View style={styles.langBadgeRow}>
+                <View
+                  style={[
+                    styles.langBadgeEn,
+                    {
+                      backgroundColor: (theme === 'dark' || globalTheme === 'dark')
+                        ? 'rgba(59, 130, 246, 0.18)'
+                        : 'rgba(59, 130, 246, 0.12)',
+                      borderColor: (theme === 'dark' || globalTheme === 'dark')
+                        ? 'rgba(59, 130, 246, 0.38)'
+                        : 'rgba(59, 130, 246, 0.28)',
+                    },
+                  ]}
+                >
+                  <Text style={styles.langBadgeEnText}>ENGLISH</Text>
+                </View>
+                <Text style={[styles.langBadgeSub, { color: getSubTextColor() }]}>
+                  — Matching Translation
+                </Text>
+              </View>
+              {hasValidEn ? (
+                <Text
+                  style={[
+                    styles.textEn,
+                    {
+                      color: (theme === 'dark' || globalTheme === 'dark') ? '#e2e8f0' : '#1e293b',
+                      fontSize: Math.round(currentFontSize * 0.94),
+                      lineHeight: Math.round(dynamicLineHeight * 0.94),
+                    },
+                  ]}
+                >
+                  {textEn}
+                </Text>
+              ) : (
+                <View style={styles.unavailableBox}>
+                  <Ionicons name="information-circle-outline" size={14} color="#94a3b8" style={{ marginRight: 6 }} />
+                  <Text style={[styles.unavailableText, { color: getSubTextColor() }]}>
+                    English translation unavailable for this verse
+                  </Text>
+                </View>
+              )}
+            </View>
           </View>
         )}
 
@@ -293,7 +401,7 @@ const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
     paddingHorizontal: 14,
-    marginBottom: 10,
+    marginBottom: 12,
     paddingVertical: 2,
   },
   leftCol: {
@@ -332,13 +440,74 @@ const styles = StyleSheet.create({
   },
   textEn: {
     fontSize: 15,
-    letterSpacing: 0.1,
+    letterSpacing: 0.15,
     fontFamily: Platform.select({ ios: 'Georgia', android: 'serif', default: 'serif' }),
+  },
+  bilingualWrapper: {
+    gap: 8,
+  },
+  bilingualBlock: {
+    paddingVertical: 2,
+  },
+  bilingualBlockEn: {
+    marginTop: 2,
+    paddingTop: 6,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255, 255, 255, 0.06)',
+  },
+  langBadgeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 4,
+    gap: 6,
+  },
+  langBadgeAm: {
+    paddingHorizontal: 6,
+    paddingVertical: 1.5,
+    borderRadius: 4,
+    borderWidth: 1,
+  },
+  langBadgeAmText: {
+    fontSize: 10,
+    fontWeight: '800',
+    color: '#e5a93c',
+    letterSpacing: 0.5,
+  },
+  langBadgeEn: {
+    paddingHorizontal: 6,
+    paddingVertical: 1.5,
+    borderRadius: 4,
+    borderWidth: 1,
+  },
+  langBadgeEnText: {
+    fontSize: 9.5,
+    fontWeight: '800',
+    color: '#60a5fa',
+    letterSpacing: 0.8,
+  },
+  langBadgeSub: {
+    fontSize: 11,
+    fontWeight: '500',
+  },
+  unavailableBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 6,
+    paddingHorizontal: 8,
+    borderRadius: 6,
+    backgroundColor: 'rgba(255, 255, 255, 0.03)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.06)',
+    marginTop: 2,
+  },
+  unavailableText: {
+    fontSize: 12.5,
+    fontStyle: 'italic',
   },
   actionBar: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 6,
+    marginTop: 8,
     gap: 6,
   },
   actionBtn: {

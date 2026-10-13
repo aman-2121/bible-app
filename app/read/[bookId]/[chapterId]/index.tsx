@@ -128,10 +128,10 @@ export default function ChapterScreen() {
 
   const displayChapterLabel =
     language === 'am'
-      ? `ምዕ. ${chapterId}`
+      ? `ምዕራፍ ${chapterId}`
       : language === 'both'
-      ? `ምዕ. / Ch. ${chapterId}`
-      : `Ch. ${chapterId}`;
+      ? `ምዕ. / Chapter ${chapterId}`
+      : `Chapter ${chapterId}`;
 
   // Next / Previous Navigation
   const navigateToChapter = (targetChapter: number) => {
@@ -191,8 +191,15 @@ export default function ChapterScreen() {
 
   const handleShare = async () => {
     try {
+      const bookRef =
+        language === 'am'
+          ? `${currentBook?.name} ${chapterId}:${selectedVerseRef?.split(':v')[1]}`
+          : language === 'both'
+          ? `${currentBook?.name} (${currentBook?.nameEn}) ${chapterId}:${selectedVerseRef?.split(':v')[1]}`
+          : `${currentBook?.nameEn} ${chapterId}:${selectedVerseRef?.split(':v')[1]}`;
+
       await Share.share({
-        message: `${selectedVerseText}\n\n- ${currentBook?.name} ${chapterId}:${selectedVerseRef?.split(':v')[1]}\n81 መጽሐፍ ቅዱስ • Ethiopian Orthodox Bible`,
+        message: `${selectedVerseText}\n\n- ${bookRef}\n81 መጽሐፍ ቅዱስ • Ethiopian Orthodox Bible`,
       });
     } catch (error) {
       console.log('Error sharing', error);
@@ -236,7 +243,7 @@ export default function ChapterScreen() {
   const getLangBadgeText = () => {
     if (language === 'am') return 'አማ';
     if (language === 'en') return 'EN';
-    return 'ሁሉ';
+    return 'AM/EN';
   };
 
   return (
@@ -396,7 +403,7 @@ export default function ChapterScreen() {
         >
           <Ionicons name="chevron-back" size={16} color={tintColor} />
           <Text style={[styles.stripBtnText, { color: tintColor }]}>
-            {language === 'am' ? 'ቀደምት' : 'Prev'}
+            {language === 'am' ? 'ቀደምት' : language === 'both' ? 'ቀደምት / Prev' : 'Prev'}
           </Text>
         </TouchableOpacity>
 
@@ -413,6 +420,8 @@ export default function ChapterScreen() {
           <Text style={styles.chapterIndicatorText}>
             {language === 'am'
               ? `ምዕራፍ ${chapterId} ከ ${totalChapters}`
+              : language === 'both'
+              ? `ምዕ. ${chapterId} • Ch. ${chapterId} of ${totalChapters}`
               : `Chapter ${chapterId} of ${totalChapters}`}
           </Text>
         </View>
@@ -425,7 +434,7 @@ export default function ChapterScreen() {
           hitSlop={{ top: 6, bottom: 6, left: 8, right: 8 }}
         >
           <Text style={[styles.stripBtnText, { color: tintColor }]}>
-            {language === 'am' ? 'ቀጣይ' : 'Next'}
+            {language === 'am' ? 'ቀጣይ' : language === 'both' ? 'ቀጣይ / Next' : 'Next'}
           </Text>
           <Ionicons name="chevron-forward" size={16} color={tintColor} />
         </TouchableOpacity>
@@ -444,17 +453,27 @@ export default function ChapterScreen() {
           const currentHl = getHighlightColor(vRef);
           const isSpeaking = activeSpeakingIdx === index;
 
+          const actionSheetText =
+            language === 'am'
+              ? (item.textAm || '')
+              : language === 'en'
+              ? (item.textEn || 'English translation unavailable for this verse')
+              : `አማርኛ:\n${item.textAm || ''}\n\nENGLISH:\n${item.textEn || 'English translation unavailable for this verse'}`;
+
           return (
             <VerseItem
               {...item}
               verseRef={vRef}
+              bookName={currentBook?.name}
+              bookNameEn={currentBook?.nameEn}
+              chapterId={chapterId}
               fontSize={fontSize}
               lineSpacing={lineSpacing}
               theme={readingTheme}
               highlightColor={currentHl}
               isSpeaking={isSpeaking}
-              onOpenActionSheet={() => handleOpenActionSheet(vRef, item.textAm)}
-              onLongPress={() => handleOpenActionSheet(vRef, item.textAm)}
+              onOpenActionSheet={() => handleOpenActionSheet(vRef, actionSheetText)}
+              onLongPress={() => handleOpenActionSheet(vRef, actionSheetText)}
             />
           );
         }}
@@ -474,7 +493,7 @@ export default function ChapterScreen() {
             >
               <Ionicons name="arrow-back" size={16} color={tintColor} />
               <Text style={[styles.footerNavText, { color: tintColor }]}>
-                {language === 'am' ? 'ቀደምት ምዕራፍ' : 'Previous Chapter'}
+                {language === 'am' ? 'ቀደምት ምዕራፍ' : language === 'both' ? 'ቀደምት / Prev' : 'Previous Chapter'}
               </Text>
             </TouchableOpacity>
 
@@ -484,7 +503,7 @@ export default function ChapterScreen() {
               activeOpacity={0.7}
             >
               <Text style={[styles.footerNavText, { color: '#fff' }]}>
-                {language === 'am' ? 'ቀጣይ ምዕራፍ' : 'Next Chapter'}
+                {language === 'am' ? 'ቀጣይ ምዕራፍ' : language === 'both' ? 'ቀጣይ / Next' : 'Next Chapter'}
               </Text>
               <Ionicons name="arrow-forward" size={16} color="#fff" />
             </TouchableOpacity>
@@ -496,7 +515,13 @@ export default function ChapterScreen() {
       {isAudioActive && (
         <AudioPlayerBar
           verses={verses}
-          currentBookName={currentBook?.name || ''}
+          currentBookName={
+            language === 'am'
+              ? (currentBook?.name || '')
+              : language === 'both'
+              ? `${currentBook?.name || ''} (${currentBook?.nameEn || ''})`
+              : (currentBook?.nameEn || currentBook?.name || '')
+          }
           chapterId={chapterId}
           initialVerseIndex={activeSpeakingIdx !== null ? activeSpeakingIdx : 0}
           autoPlay={true}

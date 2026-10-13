@@ -23,6 +23,7 @@ import { speakBibleText, stopSpeech } from '@/lib/tts';
 import * as Clipboard from 'expo-clipboard';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useBible } from '@/context/BibleContext';
+import { isFabricatedEnglish, cleanAmharicVerse } from '@/lib/englishBible';
 import { useThemeColor } from '@/hooks/use-theme-color';
 import { getVersesByRefs } from '@/lib/bibleLoader';
 import AppScreenLayout from '@/components/AppScreenLayout';
@@ -140,9 +141,27 @@ export default function BookmarksScreen() {
   };
 
   const copyVerse = async (verseItem: any) => {
-    const text = language === 'en' && verseItem.textEn ? verseItem.textEn : verseItem.textAm;
-    const bookName = language === 'am' ? verseItem.bookName : (verseItem.bookNameEn || verseItem.bookName);
-    const full = `“${text}”\n— ${bookName} ${verseItem.chapter}:${verseItem.verse}`;
+    const hasValidEn = Boolean(verseItem.textEn && verseItem.textEn.trim().length > 0 && !isFabricatedEnglish(verseItem.textEn));
+    const bookName =
+      language === 'am'
+        ? verseItem.bookName
+        : language === 'both'
+        ? `${verseItem.bookName} (${verseItem.bookNameEn || ''})`
+        : (verseItem.bookNameEn || verseItem.bookName);
+    const ref = `${bookName} ${verseItem.chapter}:${verseItem.verse}`;
+
+    let full = '';
+    if (language === 'am') {
+      full = `“${cleanAmharicVerse(verseItem.textAm)}”\n— ${ref}`;
+    } else if (language === 'en') {
+      full = hasValidEn
+        ? `“${verseItem.textEn}”\n— ${ref}`
+        : `[English translation unavailable for this verse]\n— ${ref}`;
+    } else {
+      const enPart = hasValidEn ? verseItem.textEn : '[English translation unavailable]';
+      full = `አማርኛ:\n“${cleanAmharicVerse(verseItem.textAm)}”\n\nENGLISH:\n“${enPart}”\n— ${ref}`;
+    }
+
     await Clipboard.setStringAsync(full);
 
     if (Platform.OS === 'web') {
@@ -157,11 +176,27 @@ export default function BookmarksScreen() {
 
   const shareVerse = async (verseItem: any) => {
     try {
-      const text = language === 'am' ? verseItem.textAm : (verseItem.textEn || verseItem.textAm);
-      const bookName = language === 'am' ? verseItem.bookName : (verseItem.bookNameEn || verseItem.bookName);
+      const hasValidEn = Boolean(verseItem.textEn && verseItem.textEn.trim().length > 0 && !isFabricatedEnglish(verseItem.textEn));
+      const bookName =
+        language === 'am'
+          ? verseItem.bookName
+          : language === 'both'
+          ? `${verseItem.bookName} (${verseItem.bookNameEn || ''})`
+          : (verseItem.bookNameEn || verseItem.bookName);
       const ref = `${bookName} ${verseItem.chapter}:${verseItem.verse}`;
+
+      let text = '';
+      if (language === 'am') {
+        text = `“${cleanAmharicVerse(verseItem.textAm)}”`;
+      } else if (language === 'en') {
+        text = hasValidEn ? `“${verseItem.textEn}”` : `[English translation unavailable]`;
+      } else {
+        const enPart = hasValidEn ? verseItem.textEn : '[English translation unavailable]';
+        text = `አማርኛ:\n“${cleanAmharicVerse(verseItem.textAm)}”\n\nENGLISH:\n“${enPart}”`;
+      }
+
       await Share.share({
-        message: `“${text}”\n\n— ${ref}\n\nየኢትዮጵያ ኦርቶዶክስ 81 መጽሐፍ ቅዱስ`,
+        message: `${text}\n\n— ${ref}\n\nየኢትዮጵያ ኦርቶዶክስ 81 መጽሐፍ ቅዱስ`,
       });
     } catch (e) {
       console.log(e);
@@ -282,17 +317,46 @@ export default function BookmarksScreen() {
           onPress={() => router.push(`/read/${item.bookId}/${item.chapter}`)}
           activeOpacity={0.9}
         >
-          {/* Amharic Text */}
-          <Text style={[styles.bookmarkVerseAm, { color: textColor }]}>
-            “{item.textAm}”
-          </Text>
-
-          {/* English Text if available */}
-          {item.textEn ? (
-            <Text style={[styles.bookmarkVerseEn, { color: textColor + 'bb' }]}>
-              “{item.textEn}”
+          {language === 'am' && (
+            <Text style={[styles.bookmarkVerseAm, { color: textColor }]}>
+              “{cleanAmharicVerse(item.textAm)}”
             </Text>
-          ) : null}
+          )}
+
+          {language === 'en' && (
+            (item.textEn && !isFabricatedEnglish(item.textEn)) ? (
+              <Text style={[styles.bookmarkVerseEn, { color: textColor }]}>
+                “{item.textEn}”
+              </Text>
+            ) : (
+              <Text style={[styles.bookmarkVerseEn, { color: textColor + '88', fontStyle: 'italic' }]}>
+                [English translation unavailable for this verse]
+              </Text>
+            )
+          )}
+
+          {language === 'both' && (
+            <View style={{ gap: 6 }}>
+              <View>
+                <Text style={{ fontSize: 10, fontWeight: '800', color: '#e5a93c', marginBottom: 2 }}>አማርኛ</Text>
+                <Text style={[styles.bookmarkVerseAm, { color: textColor }]}>
+                  “{cleanAmharicVerse(item.textAm)}”
+                </Text>
+              </View>
+              <View style={{ borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.06)', paddingTop: 4 }}>
+                <Text style={{ fontSize: 9.5, fontWeight: '800', color: '#60a5fa', marginBottom: 2 }}>ENGLISH</Text>
+                {(item.textEn && !isFabricatedEnglish(item.textEn)) ? (
+                  <Text style={[styles.bookmarkVerseEn, { color: textColor + 'dd' }]}>
+                    “{item.textEn}”
+                  </Text>
+                ) : (
+                  <Text style={[styles.bookmarkVerseEn, { color: textColor + '77', fontStyle: 'italic' }]}>
+                    [English translation unavailable for this verse]
+                  </Text>
+                )}
+              </View>
+            </View>
+          )}
         </TouchableOpacity>
 
         {/* Card Footer: Audio Listen, Copy, Share, Read Full */}

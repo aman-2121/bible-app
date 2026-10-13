@@ -12,6 +12,7 @@ import {
   resumeSpeech,
   AudioPlaybackState,
 } from '@/lib/tts';
+import { isFabricatedEnglish } from '@/lib/englishBible';
 
 export interface AudioVerseItem {
   verse: number;
@@ -100,6 +101,15 @@ export default function AudioPlayerBar({
     onActiveVerseChange(index);
 
     const verseItem = verses[index];
+    const isEn = language === 'en';
+    const hasValidEn = Boolean(verseItem.textEn && verseItem.textEn.trim().length > 0 && !isFabricatedEnglish(verseItem.textEn));
+
+    if (isEn && !hasValidEn) {
+      setPlaybackState('stopped');
+      setLoadingMessage('English audio unavailable for this verse');
+      return;
+    }
+
     setPlaybackState('loading');
     setLoadingMessage(language === 'en' ? 'Loading audio...' : 'የአማርኛ ንባብ ድምፅ እየተዘጋጀ ነው...');
 
@@ -249,7 +259,7 @@ export default function AudioPlayerBar({
           <View style={{ flex: 1 }}>
             <View style={styles.titleBadgeRow}>
               <Text style={[styles.bookTitle, { color: textColor }]} numberOfLines={1}>
-                {currentBookName} ምዕራፍ {chapterId}
+                {currentBookName} • {language === 'am' ? `ምዕራፍ ${chapterId}` : (language === 'both' ? `ምዕ. / Ch. ${chapterId}` : `Chapter ${chapterId}`)}
               </Text>
               <View style={styles.ttsLangBadge}>
                 <Text style={styles.ttsLangBadgeText}>{activeVoiceLabel}</Text>

@@ -1,6 +1,7 @@
 import * as Speech from 'expo-speech';
 import { Alert, Platform } from 'react-native';
 import { generateAudioCacheKey, getCachedAudio, setCachedAudio } from './audioCache';
+import { isFabricatedEnglish, cleanAmharicVerse } from './englishBible';
 import {
   playAudioSource,
   stopAudioSource,
@@ -114,8 +115,9 @@ export function resolveSpeechTarget(
   appLang: AppLanguage = 'am'
 ): { text: string; language: string; isAmharic: boolean } {
   if (appLang === 'en') {
+    const validEn = textEn && textEn.trim().length > 0 && !isFabricatedEnglish(textEn);
     return {
-      text: textEn && textEn.trim() ? textEn.trim() : (textAm || '').trim(),
+      text: validEn ? textEn.trim() : '',
       language: TTS_CONFIG.englishLocale,
       isAmharic: false,
     };
@@ -123,7 +125,7 @@ export function resolveSpeechTarget(
 
   // Amharic or Bilingual: ALWAYS send original Amharic Bible text, never translated!
   return {
-    text: (textAm || '').trim(),
+    text: cleanAmharicVerse(textAm || ''),
     language: TTS_CONFIG.amharicLocale,
     isAmharic: true,
   };
@@ -314,7 +316,16 @@ export async function speakBibleText(options: SpeakOptions): Promise<boolean> {
   );
 
   if (!text) {
-    if (options.onDone) options.onDone();
+    if (options.appLang === 'en') {
+      if (Platform.OS !== 'web') {
+        Alert.alert(
+          'English Audio Unavailable',
+          'English audio narration is unavailable because an English translation is not available for this verse in this offline edition.'
+        );
+      }
+    }
+    if (options.onError) options.onError(new Error('Audio text unavailable'));
+    else if (options.onDone) options.onDone();
     return false;
   }
 

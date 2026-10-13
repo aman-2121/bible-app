@@ -1,7 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { BIBLE_BOOKS } from '@/constants/bibleBooks';
 import { loadBibleAsset } from './bibleAssets';
-import { resolveChapterEnglish, CANONICAL_API_BOOKS } from './englishBible';
+import { resolveChapterEnglish, CANONICAL_API_BOOKS, isFabricatedEnglish, cleanAmharicVerse } from './englishBible';
 
 export async function loadBook(bookId: string) {
   const bookData = loadBibleAsset(bookId);
@@ -16,8 +16,8 @@ export async function loadBook(bookId: string) {
         if (sec.verses) {
           verses = verses.concat(sec.verses.map((v: any) => ({
             verse: v.verse,
-            textAm: v.text,
-            textEn: v.text_en || ''
+            textAm: cleanAmharicVerse(v.text || ''),
+            textEn: (v.text_en && !isFabricatedEnglish(v.text_en)) ? v.text_en.trim() : ''
           })));
         }
       });
@@ -40,10 +40,13 @@ export async function loadBookWithCachedEnglish(bookId: string) {
         const cached = await AsyncStorage.getItem(cacheKey);
         if (cached) {
           const enData = JSON.parse(cached);
-          verses = verses.map((v: any) => {
-            const enVerse = enData.find((ev: any) => ev.verse === v.verse);
-            return { ...v, textEn: enVerse && enVerse.text ? enVerse.text : v.textEn };
-          });
+          if (Array.isArray(enData)) {
+            verses = verses.map((v: any) => {
+              const enVerse = enData.find((ev: any) => ev.verse === v.verse);
+              const validEn = enVerse && enVerse.text && !isFabricatedEnglish(enVerse.text);
+              return { ...v, textEn: validEn ? enVerse.text.trim() : v.textEn };
+            });
+          }
         }
       } catch (e) {
         // ignore cache errors
@@ -63,26 +66,37 @@ export async function getChapter(bookId: string, chapterId: string) {
     let verses = [...ch.verses];
     const cacheKey = `en_chapter_${bookId}_${chapterId}`;
 
-    // 1. Pre-populate with offline English translations immediately (guaranteed non-empty textEn)
+    // 1. Pre-populate with authentic offline English translations
     verses = await resolveChapterEnglish(bookId, chapterId, verses, book?.nameEn || '');
 
-    // 2. Check AsyncStorage cache for any previously cached/enriched text
+    // 2. Check AsyncStorage cache for any previously cached genuine text
     try {
       const cached = await AsyncStorage.getItem(cacheKey);
       if (cached) {
         const enData = JSON.parse(cached);
-        return verses.map(v => {
-          const enVerse = enData.find((ev: any) => ev.verse === v.verse);
-          return { ...v, textEn: enVerse && enVerse.text ? enVerse.text : v.textEn };
-        });
+        if (Array.isArray(enData)) {
+          // If cached data contains old fabricated placeholders, purge cache immediately
+          const hasFabricated = enData.some((ev: any) => isFabricatedEnglish(ev.text));
+          if (hasFabricated) {
+            await AsyncStorage.removeItem(cacheKey);
+          } else {
+            return verses.map(v => {
+              const enVerse = enData.find((ev: any) => ev.verse === v.verse);
+              const validEn = enVerse && enVerse.text && !isFabricatedEnglish(enVerse.text);
+              return { ...v, textEn: validEn ? enVerse.text.trim() : v.textEn };
+            });
+          }
+        }
       }
     } catch (e) {
       console.log('Error reading cache', e);
     }
 
-    // 3. For supported Protestant canon books, attempt online enrichment with sanitized canonical names
+    // 3. For supported Protestant canon books, attempt online enrichment if verses lack English
+    const hasMissingEnglish = verses.some(v => !v.textEn || v.textEn.trim() === '');
     const canonicalName = CANONICAL_API_BOOKS[bookId];
-    if (canonicalName) {
+
+    if (canonicalName && hasMissingEnglish) {
       try {
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 4000);
@@ -94,13 +108,17 @@ export async function getChapter(bookId: string, chapterId: string) {
         if (response.ok) {
           const enData = await response.json();
           if (enData.verses && Array.isArray(enData.verses)) {
-            const simplifiedEnData = enData.verses.map((ev: any) => ({
-              verse: ev.verse,
-              text: ev.text ? ev.text.trim() : '',
-            }));
+            const simplifiedEnData = enData.verses
+              .filter((ev: any) => ev.text && !isFabricatedEnglish(ev.text))
+              .map((ev: any) => ({
+                verse: ev.verse,
+                text: ev.text.trim(),
+              }));
 
-            // Save to cache
-            await AsyncStorage.setItem(cacheKey, JSON.stringify(simplifiedEnData));
+            // Save clean genuine text to cache
+            if (simplifiedEnData.length > 0) {
+              await AsyncStorage.setItem(cacheKey, JSON.stringify(simplifiedEnData));
+            }
 
             // Merge english verses into our local verses
             verses = verses.map(v => {
@@ -113,7 +131,7 @@ export async function getChapter(bookId: string, chapterId: string) {
           }
         }
       } catch (e) {
-        // Network timeout, offline, or CORS — offline English verses are already populated!
+        // Network timeout, offline, or CORS — offline English verses are already populated
       }
     }
 
